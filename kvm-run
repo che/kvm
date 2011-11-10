@@ -29,7 +29,13 @@ CPU_MAX_DEFAULT="1"
 CPU_MAX=""
 DEV_MODEL="virtio"
 UI_MODE=" -nographic"
+GUEST_USER_DEFAULT="hh"
+GUEST_USER=""
+GUEST_SCRIPT=""
+GUEST_SCRIPT_STATUS=""
+GUEST_CLI="ssh"
 UNKNOW=="unknow"
+SCAN_UTIL="arp-scan"
 
 REG_IP_ADDR="^((([0-9]|[1-9][0-9])|(([1][0-9][0-9])|(([2][0-4][0-9])|([2][5][0-4]))))[.]){3}(([0-9]|[1-9][0-9])|(([1][0-9][0-9])|(([2][0-4][0-9])|([2][5][0-4]))))$"
 REG_MAC_ADDR="^[0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f]$"
@@ -67,6 +73,30 @@ function def_mac_addr()
 	MAC_ADDR_="$(echo "$MAC_ADDR" | tr 'A' 'a' | tr 'B' 'b' | tr 'C' 'c' | tr 'D' 'd' | tr 'E' 'e' | tr 'F' 'f')"
 }
 
+# Runing script on guest machene after start up.
+function default_post_script()
+{
+	cat <<P_O_S_T__S_C_R_I_P_T
+# Change local DNS.
+LH="localhost"
+RES_CONF="/etc/resolv.conf"
+DNS_CONF="/etc/dnsmasq.conf"
+DNS_RES_CONF="$(echo "$DNS_CONF" | cut -d\. -f1).d/$LH"
+DNS_CONF_STR="resolv-file="
+
+if [ -f "$RES_CONF" ] && [ -f "$DNS_CONF" ]; then
+	sudo cp -f "$RES_CONF" "$DNS_RES_CONF"
+	if [ "$?" == "0" ]; then
+		sudo cat "$DNS_CONF" | grep "$DNS_CONF_STR$DNS_RES_CONF"
+		if [ "$?" != "0" ]; then
+			sudo sed -i "s#\(\#$DNS_CONF_STR\).*#\1\n$DNS_CONF_STR$DNS_RES_CONF#g" "$DNS_CONF"
+		fi
+		sudo sed -i "s#\(nameserver\).*#\1 $LH#g" "$RES_CONF"
+	fi
+fi
+P_O_S_T__S_C_R_I_P_T
+}
+
 # Help message.
 function help()
 {
@@ -84,6 +114,11 @@ Options:
     -b, --bridge-interface  Set bridge interface(by default $BR_IFACE_DEFAULT).
     -c, --cpu               Set CPU cores and max using. Format: cores:maxcpu.
     -g, --graphic           Set GUI mode(by default text mode).
+    -u, --guest-user        Set user name for script running on guest machine
+                            (by default $GUEST_USER_DEFAULT).
+    -s, --guest-script      Runnig script on guest machene after start up
+                            (by default will be generated - not empty).
+    -S, --no-guest-script   Not runnig script on guest machene after start up.
     -v, --version           Print the current version.
     -h, --help              Show this message.
 
@@ -94,17 +129,17 @@ Note:
 H_E_L_P
 }
 
-# arp-scan checking.
-sudo arp-scan -V 2>/dev/null
+# Scan utility(arp-scan) checking.
+sudo $SCAN_UTIL -V 2>/dev/null
 if [ "$?" != "0" ]; then
-	error_msg "You must install arp-scan utility program(package)"
+	error_msg "You must install '$SCAN_UTIL' utility program(package)"
 fi
 
 # Difinition default MAC address.
 def_mac_addr
 
 # Options definition.
-OPTS="$(getopt -o "i:r:m:Mb:c:gvh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Svh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script:,no-guest-script,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	exit 1
@@ -170,8 +205,29 @@ while [ $# -gt 0 ]; do
 		UI_MODE=""
 		shift
 	;;
+	-u|--guest-user )
+		echo "$2" | grep -E "^[0-9A-Za-z\_\-\.]+$" >/dev/null
+		if [ "$?" == "0" ]; then
+			GUEST_USER="$2"
+		else
+			GUEST_USER=$GUEST_USER_DEFAULT
+		fi
+		shift 2
+	;;
+	-s|--guest-script )
+		if [ -x "$2" ] && [ -f "$2" ]; then
+			GUEST_SCRIPT="$(cat "$2")"
+		else
+			error_msg "No such file '$2'"
+		fi
+		shift 2
+	;;
+	-S|--no-guest-script )
+		GUEST_SCRIPT_STATUS="no"
+		shift
+	;;
 	-v|--version )
-		echo "Version: 1.1.0"
+		echo "Version: 1.2.0"
 		exit 0
 	;;
 	-h|--help )
@@ -184,6 +240,23 @@ while [ $# -gt 0 ]; do
 	;;
 	esac
 done
+
+# Guest user checking.
+if [ -z "$GUEST_USER" ]; then
+	GUEST_USER=$GUEST_USER_DEFAULT
+fi
+
+# Guest script checking.
+if [ -z "$GUEST_SCRIPT_STATUS" ]; then
+	# Guest client(ssh) checking.
+	$GUEST_CLI -V 2>/dev/null
+	if [ "$?" != "0" ]; then
+		error_msg "You must install '$GUEST_CLI' utility program(package)"
+	fi
+	if [ -z "$GUEST_SCRIPT" ]; then
+		GUEST_SCRIPT="$(default_post_script)"
+	fi
+fi
 
 # IMG value checking.
 if [ -z "$IMG" ]; then
@@ -286,7 +359,7 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 		sleep 2
 		T_STR=""
 		for s in $(seq 1 60); do
-			for i in $(sudo arp-scan --interface "$BR_IFACE" "${IP_NET}/24" 2>/dev/null); do
+			for i in $(sudo $SCAN_UTIL --interface "$BR_IFACE" "${IP_NET}/24" 2>/dev/null); do
 				if [ "$MAC_ADDR_" == "$i" ]; then
 					IP_ADDR=$T_STR
 				fi
@@ -305,8 +378,22 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 	fi
 fi
 
-# Print basic information about the running VM(ending).
+# Print IP address.
 echo "    IP: $IP_ADDR"
+
+# Guest values connection.
+echo "  Guest:"
+echo "    User: $GUEST_USER"
+
+# Guest script running.
+if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$UNKNOW" ] && [ ! -z "$GUEST_SCRIPT" ]; then
+	$GUEST_CLI "${GUEST_USER}@${IP_ADDR}" "$GUEST_SCRIPT"
+fi
+
+# Print guest script status.
+echo "    Script status: $?"
+
+# Print basic information about the running VM(ending).
 echo ""
 
 exit $?
