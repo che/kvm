@@ -223,7 +223,7 @@ if [ -z "$BR_IFACE" ]; then
 fi
 
 # Set TAP interface.
-for t in $(seq 0 1023); do
+for t in $(seq 0 127); do
 	MSG="$(sudo tunctl -u $VM_USER -t tap$t 2>/dev/null)"
 	if [ "$?" == "0" ]; then
 		sudo ip link set tap$t up
