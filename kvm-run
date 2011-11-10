@@ -1,0 +1,312 @@
+#!/bin/bash
+#
+# Author: Pavel Chebotarev <p.chebotarev@hh.by>|<che.pasha@gmail.com>
+#
+
+# Variables definition.
+VM_USER="$(whoami)"
+VM_NAME="$VM_USER-"
+VM_PID=""
+RAM_SIZE_DEFAULT="2048"
+RAM_SIZE_MAX="32768"
+RAM_SIZE_MIN="64"
+RAM_SIZE=""
+IMG_DEFAULT="/root/ubuntu-server-10.04-64.img"
+IMG_DIR=""
+IMG_FILE=""
+IMG=""
+MAC_ADDR_STATUS=""
+MAC_ADDR_STR=""
+MAC_ADDR="00$(hexdump -n 5 -v -e '/1 ":%02X"' /dev/urandom)"
+IP_ADDR=""
+BR_IFACE_DEFAULT="br0"
+BR_IFACE=""
+BR_MAC=""
+TAP_ID=""
+CPU_CORES_DEFAULT="2"
+CPU_CORES=""
+CPU_MAX_DEFAULT="1"
+CPU_MAX=""
+DEV_MODEL="virtio"
+UI_MODE=" -nographic"
+UNKNOW=="unknow"
+
+REG_IP_ADDR="^((([0-9]|[1-9][0-9])|(([1][0-9][0-9])|(([2][0-4][0-9])|([2][5][0-4]))))[.]){3}(([0-9]|[1-9][0-9])|(([1][0-9][0-9])|(([2][0-4][0-9])|([2][5][0-4]))))$"
+REG_MAC_ADDR="^[0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f][:][0-9A-Fa-f][0-9A-Fa-f]$"
+REG_RAM_SIZE="^[0-9][0-9][0-9]?[0-9]?[0-9]?$"
+REG_BR_IFACE="^[b][r][0-9][0-9]?$"
+
+# Print error message and exit.
+function error_msg()
+{
+	echo "Error: $1"
+	exit 1
+}
+
+# Checking file KVM image.
+function check_img()
+{
+	if [ -z "$IMG" ]; then
+		error_msg "File KVM image not has been defined"
+	fi
+	if [ "$IMG" == "$IMG_DEFAULT" ]; then
+		IMG_DIR="$(dirname "$IMG")/"
+	else
+		IMG_DIR="$(cd $(dirname "$IMG") && pwd)/"
+	fi
+	IMG_FILE="$(basename "$IMG")"
+	if [ ! -f "$IMG_DIR$IMG_FILE" ]; then
+		error_msg "No such file '$IMG_DIR$IMG_FILE'"
+	fi
+}
+
+# Definition MAC address.
+function def_mac_addr()
+{
+	MAC_ADDR="$(echo "$MAC_ADDR" | tr 'a' 'A' | tr 'b' 'B' | tr 'c' 'C' | tr 'd' 'D' | tr 'e' 'E' | tr 'f' 'F')"
+	MAC_ADDR_="$(echo "$MAC_ADDR" | tr 'A' 'a' | tr 'B' 'b' | tr 'C' 'c' | tr 'D' 'd' | tr 'E' 'e' | tr 'F' 'f')"
+}
+
+# Help message.
+function help()
+{
+	cat <<H_E_L_P
+
+Usage: $(basename $0) [options]
+
+Options:
+    -i, --kvm-image         Set file KVM VM image
+                            (by default $IMG_DEFAULT).
+    -r, --ram-size          Set RAM size(M)(by default $RAM_SIZE_DEFAULT).
+                            Size: min=$RAM_SIZE_MIN and max=$RAM_SIZE_MAX.
+    -m, --mac-address       Set MAC address(by default generated).
+    -n, --no-mac-address    Not use MAC address at startup.
+    -b, --bridge-interface  Set bridge interface(by default $BR_IFACE_DEFAULT).
+    -c, --cpu               Set CPU cores and max using. Format: cores:maxcpu.
+    -g, --graphic           Set GUI mode(by default text mode).
+    -v, --version           Print the current version.
+    -h, --help              Show this message.
+
+Note:
+    You have to make file '/etc/udev/rules.d/70-persistent-net.rules' empty
+    if you run the tighter guest Linux VM with a different MAC address.
+
+H_E_L_P
+}
+
+# arp-scan checking.
+sudo arp-scan -V 2>/dev/null
+if [ "$?" != "0" ]; then
+	error_msg "You must install arp-scan utility program(package)"
+fi
+
+# Difinition default MAC address.
+def_mac_addr
+
+# Options definition.
+OPTS="$(getopt -o "i:r:m:nb:c:gvh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,version,help" -a -- "$@" 2>/dev/null)"
+if [ "$?" != "0" ]; then
+	help
+	exit 1
+fi
+eval set -- "$OPTS"
+
+# Options parsing.
+while [ $# -gt 0 ]; do
+	case $1 in
+	-- )
+		shift
+	;;
+	-i|--kvm-image )
+		IMG="$2"
+		check_img
+		shift 2
+	;;
+	-r|--ram-size )
+		echo "$2" | grep -E "$REG_RAM_SIZE" >/dev/null
+		if [ "$?" == "0" ] && [ $2 -ge $RAM_SIZE_MIN ] && [ $2 -le $RAM_SIZE_MAX ]; then
+			RAM_SIZE="$2"
+		else
+			error_msg "Incorrectly RAM size '$2'"
+		fi
+		shift 2
+	;;
+	-m|--mac-address )
+		echo "$2" | grep -E "$REG_MAC_ADDR" >/dev/null
+		if [ "$?" == "0" ]; then
+			MAC_ADDR="$2"
+		else
+			error_msg "Incorrectly MAC address '$2'"
+		fi
+		shift 2
+	;;
+	-n|--no-mac-address )
+		MAC_ADDR_STATUS="no"
+		shift
+	;;
+	-b|--bridge-interface )
+		echo "$2" | grep -E "$REG_BR_IFACE" >/dev/null
+		if [ "$?" == "0" ]; then
+			BR_IFACE="$2"
+		else
+			error_msg "Incorrectly bridge interface '$2'"
+		fi
+		shift 2
+	;;
+	-c|--cpu )
+		echo "$2" | grep -E "^[1-9][:][1-9]$" >/dev/null
+		if [ "$?" == "0" ]; then
+			CPU_CORES="$(echo "$2" | cut -d\: -f1)"
+			CPU_MAX="$(echo "$2" | cut -d\: -f2)"
+		else
+			error_msg "Incorrectly 'cores:maxcpu' values '$2'"
+		fi
+		if [ $CPU_MAX -gt $CPU_CORES ]; then
+			error_msg "Cores values must be more or equal maxcpu value"
+		fi
+		shift 2
+	;;
+	-g|--graphic )
+		UI_MODE=""
+		shift
+	;;
+	-v|--version )
+		echo "Version: 1.1.0"
+		exit 0
+	;;
+	-h|--help )
+		help
+		exit 0
+	;;
+	* )
+		help
+		exit 1
+	;;
+	esac
+done
+
+# IMG value checking.
+if [ -z "$IMG" ]; then
+	IMG=$IMG_DEFAULT
+	check_img
+fi
+
+# RAM_SIZE value checking.
+if [ -z "$RAM_SIZE" ]; then
+	RAM_SIZE=$RAM_SIZE_DEFAULT
+fi
+
+# Checking CPU values.
+if [ -z "$CPU_CORES" ]; then
+	CPU_CORES=$CPU_CORES_DEFAULT
+fi
+if [ -z "$CPU_MAX" ]; then
+	CPU_MAX=$CPU_MAX_DEFAULT
+fi
+
+# MAC_ADDR value checking.
+if [ -z "$MAC_ADDR_STATUS" ]; then
+	def_mac_addr
+	MAC_ADDR_STR=",macaddr=$MAC_ADDR"
+else
+	MAC_ADDR="$UNKNOW"
+	IP_ADDR="$UNKNOW"
+	MAC_ADDR_STR=""
+fi
+
+# Definition full VM name.
+VM_NAME="$VM_NAME$(echo "$MAC_ADDR_" | sed "s/\://g")"
+
+# BR_IFACE value checking.
+if [ -z "$BR_IFACE" ]; then
+	BR_IFACE=$BR_IFACE_DEFAULT
+fi
+
+# Set TAP interface.
+for t in $(seq 0 1023); do
+	MSG="$(sudo tunctl -u $VM_USER -t tap$t 2>/dev/null)"
+	if [ "$?" == "0" ]; then
+		sudo ip link set tap$t up
+		sudo brctl addif $BR_IFACE tap$t 2>/dev/null
+		TAP_ID=$t
+		break
+	fi
+done
+if [ -z "$TAP_ID" ]; then
+	echo "Could not set 'tap'"
+	exit 1
+fi
+
+# Running KVM.
+kvm "${IMG_DIR}${IMG_FILE}" \
+	-name "$VM_NAME" \
+	-m "$RAM_SIZE" \
+	-smp ${CPU_MAX},cores=${CPU_CORES},maxcpus=$CPU_MAX \
+	-drive cache=writeback,if=$DEV_MODEL \
+	-net nic,model=${DEV_MODEL},vlan=0$MAC_ADDR_STR \
+	-net tap,vlan=0,ifname=tap${TAP_ID},script=no,downscript=no \
+	-localtime$UI_MODE &
+
+# Definition VM PID.
+VM_PID="$(ps ax | grep "kvm" | grep "$VM_NAME" | cut -d\  -f1)"
+if [ -z "$VM_PID" ]; then
+	VM_PID="$UNKNOW"
+fi
+
+# Print basic information about the running VM.
+echo ""
+echo "KVM:"
+echo "  User: $VM_USER"
+echo "  Image:"
+echo "    Directory: $IMG_DIR"
+echo "    File: $IMG_FILE"
+echo "  Name: $VM_NAME"
+echo "  PID: $VM_PID"
+echo "  CPU:"
+echo "    Cores: $CPU_CORES"
+echo "    Max: $CPU_MAX"
+echo "  RAM size: ${RAM_SIZE}M"
+echo "  Interface:"
+echo "    Bridge: $BR_IFACE"
+echo "    TAP: tap$TAP_ID"
+echo "  Address:"
+echo "    MAC: $MAC_ADDR"
+
+# IP address definition if MAC address has been defined.
+if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
+	for i in $(sudo ifconfig "$BR_IFACE"); do
+		echo "$i" | grep -E "^[a][d][d][r][:]" >/dev/null
+		if [ "$?" == "0" ]; then
+			IP_NET="$(echo "$i" | cut -d\: -f2 | cut -d\. -f-3).0"
+			break
+		fi
+	done
+	echo "$IP_NET" | grep -E "$REG_IP_ADDR" >/dev/null
+	if [ "$?" == "0" ]; then
+		sleep 2
+		T_STR=""
+		for s in $(seq 1 60); do
+			for i in $(sudo arp-scan --interface "$BR_IFACE" "${IP_NET}/24" 2>/dev/null); do
+				if [ "$MAC_ADDR_" == "$i" ]; then
+					IP_ADDR=$T_STR
+				fi
+				T_STR="$i"
+			done
+			if [ ! -z "$IP_ADDR" ]; then
+				break
+			fi
+			sleep 1
+		done
+		if [ -z "$IP_ADDR" ]; then
+			IP_ADDR=$UNKNOW
+		fi
+	else
+		IP_ADDR=$UNKNOW
+	fi
+fi
+
+# Print basic information about the running VM(ending).
+echo "    IP: $IP_ADDR"
+echo ""
+
+exit $?
