@@ -33,7 +33,7 @@ GUEST_USER_DEFAULT="hh"
 GUEST_USER=""
 GUEST_SCRIPT=""
 GUEST_SCRIPT_STATUS=""
-GUEST_CLI="ssh"
+GUEST_CLI="ssh -t"
 UNKNOW=="unknow"
 SCAN_UTIL="arp-scan"
 
@@ -227,7 +227,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.3.0"
+		echo "Version: 1.3.1"
 		exit 0
 	;;
 	-h|--help )
@@ -318,7 +318,6 @@ kvm "${IMG_DIR}${IMG_FILE}" \
 	-drive cache=writeback,if=$DEV_MODEL \
 	-net nic,model=${DEV_MODEL},vlan=0$MAC_ADDR_STR \
 	-net tap,vlan=0,ifname=tap${TAP_ID},script=no,downscript=no \
-	-usb -usbdevice tablet -usbdevice host:auto:*.* -soundhw all \
 	-localtime$UI_MODE &
 
 # Definition VM PID.
