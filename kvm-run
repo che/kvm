@@ -80,7 +80,7 @@ Options:
     -r, --ram-size          Set RAM size(M)(by default $RAM_SIZE_DEFAULT).
                             Size: min=$RAM_SIZE_MIN and max=$RAM_SIZE_MAX.
     -m, --mac-address       Set MAC address(by default generated).
-    -n, --no-mac-address    Not use MAC address at startup.
+    -M, --no-mac-address    Not use MAC address at startup.
     -b, --bridge-interface  Set bridge interface(by default $BR_IFACE_DEFAULT).
     -c, --cpu               Set CPU cores and max using. Format: cores:maxcpu.
     -g, --graphic           Set GUI mode(by default text mode).
@@ -104,7 +104,7 @@ fi
 def_mac_addr
 
 # Options definition.
-OPTS="$(getopt -o "i:r:m:nb:c:gvh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:r:m:Mb:c:gvh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	exit 1
@@ -140,7 +140,7 @@ while [ $# -gt 0 ]; do
 		fi
 		shift 2
 	;;
-	-n|--no-mac-address )
+	-M|--no-mac-address )
 		MAC_ADDR_STATUS="no"
 		shift
 	;;
