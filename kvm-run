@@ -248,7 +248,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.4.0"
+		echo "Version: 1.4.1"
 		exit 0
 	;;
 	-h|--help )
@@ -277,7 +277,7 @@ if [ -z "$GUEST_SCRIPT_STATUS" ]; then
 	# Guest client(ssh) checking.
 	$GUEST_CLI -V 2>/dev/null
 	if [ "$?" != "0" ]; then
-		error_msg "You must install '$GUEST_CLI' utility program(package)"
+		error_msg "You must install '$(echo "$GUEST_CLI" | cut -d\  -f1)' utility program(package)"
 	fi
 fi
 
