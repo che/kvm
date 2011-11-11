@@ -206,7 +206,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-u|--guest-user )
-		echo "$2" | grep -E "^[0-9A-Za-z\_\-\.]+$" >/dev/null
+		echo "$2" | grep -E "^[0-9A-Za-z\_\-\.\:]+$" >/dev/null
 		if [ "$?" == "0" ]; then
 			GUEST_USER="$2"
 		else
