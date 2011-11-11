@@ -81,17 +81,17 @@ function default_post_script()
 LH="localhost"
 RES_CONF="/etc/resolv.conf"
 DNS_CONF="/etc/dnsmasq.conf"
-DNS_RES_CONF="$(echo "$DNS_CONF" | cut -d\. -f1).d/$LH"
+DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$LH"
 DNS_CONF_STR="resolv-file="
 
-if [ -f "$RES_CONF" ] && [ -f "$DNS_CONF" ]; then
-	sudo cp -f "$RES_CONF" "$DNS_RES_CONF"
-	if [ "$?" == "0" ]; then
-		sudo cat "$DNS_CONF" | grep "$DNS_CONF_STR$DNS_RES_CONF"
-		if [ "$?" != "0" ]; then
-			sudo sed -i "s#\(\#$DNS_CONF_STR\).*#\1\n$DNS_CONF_STR$DNS_RES_CONF#g" "$DNS_CONF"
+if [ -f "\$RES_CONF" ] && [ -f "\$DNS_CONF" ]; then
+	sudo cp -f "\$RES_CONF" "\$DNS_RES_CONF" >/dev/null
+	if [ "\$?" == "0" ]; then
+		sudo cat "\$DNS_CONF" | grep "\$DNS_CONF_STR\$DNS_RES_CONF" >/dev/null
+		if [ "\$?" != "0" ]; then
+			sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
 		fi
-		sudo sed -i "s#\(nameserver\).*#\1 $LH#g" "$RES_CONF"
+		sudo sed -i "s#\(nameserver\).*#\1 \$LH#g" "\$RES_CONF" >/dev/null
 	fi
 fi
 P_O_S_T__S_C_R_I_P_T
