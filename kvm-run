@@ -90,7 +90,7 @@ VM_HOST_IP="$IP_ADDR"
 RES_CONF="$RES_CONF"
 DNS_CONF="/etc/dnsmasq.conf"
 DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).\$(echo "\$RES_CONF" | cut -d\/ -f3)"
-DNS_D_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$VM_HOST_NAME"
+DNS_D_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$VM_HOST_NAME.\$VM_DOMAIN_NAME"
 DNS_CONF_STR="resolv-file="
 
 if [ -f "\$RES_CONF" ]; then
