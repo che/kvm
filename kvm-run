@@ -34,6 +34,8 @@ GUEST_USER=""
 GUEST_SCRIPT=""
 GUEST_SCRIPT_STATUS=""
 GUEST_CLI="ssh -t"
+GUEST_HOST_NAME_DEFAULT="dev.pyn.ru"
+GUEST_HOST_NAME=""
 UNKNOW=="unknow"
 SCAN_UTIL="arp-scan"
 
@@ -78,21 +80,29 @@ function default_post_script()
 {
 	cat <<D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
 # Change local DNS.
-LH="localhost"
+VM_HOST_NAME="$GUEST_HOST_NAME"
+VM_HOST_LH="127.0.0.1"
+VM_HOST_IP="$IP_ADDR"
 RES_CONF="/etc/resolv.conf"
 DNS_CONF="/etc/dnsmasq.conf"
-DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$LH"
+DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).\$(echo "\$RES_CONF" | cut -d\/ -f3)"
+DNS_D_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$VM_HOST_NAME"
 DNS_CONF_STR="resolv-file="
 
 if [ -f "\$RES_CONF" ] && [ -f "\$DNS_CONF" ]; then
+	if [ ! -x "\$DNS_D_CONF" ]; then
+		sudo touch "\$DNS_D_CONF"
+	fi
+	echo -n "address=/\$VM_HOST_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
 	sudo cp -f "\$RES_CONF" "\$DNS_RES_CONF" >/dev/null
 	if [ "\$?" == "0" ]; then
 		sudo cat "\$DNS_CONF" | grep "\$DNS_CONF_STR\$DNS_RES_CONF" >/dev/null
 		if [ "\$?" != "0" ]; then
 			sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
 		fi
-		sudo sed -i "s#\(nameserver\).*#\1 \$LH#g" "\$RES_CONF" >/dev/null
+		sudo sed -i "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
 	fi
+	sudo "/etc/init.d/\$(echo "\$DNS_CONF" | cut -d\/ -f3 | cut -d\. -f1)" restart
 fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
 }
@@ -116,9 +126,11 @@ Options:
     -g, --graphic           Set GUI mode(by default text mode).
     -u, --guest-user        Set user name for script running on guest machine
                             (by default $GUEST_USER_DEFAULT).
-    -s, --guest-script      Runnig script on guest machene after start up
+    -s, --guest-script      Runnig script on guest machine after start up
                             (by default will be generated - not empty).
     -S, --no-guest-script   Not runnig script on guest machene after start up.
+    -n, --guest-host-name   Set host name of guest machine
+                            (by default $GUEST_HOST_NAME_DEFAULT).
     -v, --version           Print the current version.
     -h, --help              Show this message.
 
@@ -139,7 +151,7 @@ fi
 def_mac_addr
 
 # Options definition.
-OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Svh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script:,no-guest-script,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script:,no-guest-script,guest-host-name:,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	exit 1
@@ -210,7 +222,7 @@ while [ $# -gt 0 ]; do
 		if [ "$?" == "0" ]; then
 			GUEST_USER="$2"
 		else
-			GUEST_USER=$GUEST_USER_DEFAULT
+			error_msg "Guest user name value is incorrectly '$2'"
 		fi
 		shift 2
 	;;
@@ -226,8 +238,17 @@ while [ $# -gt 0 ]; do
 		GUEST_SCRIPT_STATUS="no"
 		shift
 	;;
+	-n|--guest-host-name )
+		echo "$2" | grep -E "^[0-9A-Za-z][0-9A-Za-z\-\.][0-9A-Za-z\-\.]+$" >/dev/null
+		if [ "$?" == "0" ]; then
+			GUEST_HOST_NAME="$2"
+		else
+			error_msg "Guest host name value is incorrectly '$2'"
+		fi
+		shift 2
+	;;
 	-v|--version )
-		echo "Version: 1.3.3"
+		echo "Version: 1.4.0"
 		exit 0
 	;;
 	-h|--help )
@@ -246,15 +267,17 @@ if [ -z "$GUEST_USER" ]; then
 	GUEST_USER=$GUEST_USER_DEFAULT
 fi
 
+# Guest host name checking.
+if [ -z "$GUEST_HOST_NAME" ]; then
+	GUEST_HOST_NAME=$GUEST_HOST_NAME_DEFAULT
+fi
+
 # Guest script checking.
 if [ -z "$GUEST_SCRIPT_STATUS" ]; then
 	# Guest client(ssh) checking.
 	$GUEST_CLI -V 2>/dev/null
 	if [ "$?" != "0" ]; then
 		error_msg "You must install '$GUEST_CLI' utility program(package)"
-	fi
-	if [ -z "$GUEST_SCRIPT" ]; then
-		GUEST_SCRIPT="$(default_post_script)"
 	fi
 fi
 
@@ -386,7 +409,10 @@ echo "  Guest:"
 echo "    User: $GUEST_USER"
 
 # Guest script running.
-if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$UNKNOW" ] && [ ! -z "$GUEST_SCRIPT" ]; then
+if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$UNKNOW" ]; then
+	if [ -z "$GUEST_SCRIPT" ]; then
+		GUEST_SCRIPT="$(default_post_script)"
+	fi
 	$GUEST_CLI "${GUEST_USER}@${IP_ADDR}" "$GUEST_SCRIPT"
 fi
 
