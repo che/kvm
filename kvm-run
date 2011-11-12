@@ -377,7 +377,7 @@ if [ -z "$TAP_ID" ]; then
 fi
 
 # Running KVM.
-$VM_NAME "${IMG_DIR}${IMG_FILE}" \
+$VM_BIN_FILE "${IMG_DIR}${IMG_FILE}" \
 	-name "$VM_NAME" \
 	-m "$RAM_SIZE" \
 	-smp ${CPU_MAX},cores=${CPU_CORES},maxcpus=$CPU_MAX \
@@ -387,7 +387,7 @@ $VM_NAME "${IMG_DIR}${IMG_FILE}" \
 	-localtime$UI_MODE &
 
 # Definition VM PID.
-VM_PID="$(ps ax | grep "$VM_NAME" | grep "$VM_NAME" | cut -d\  -f1)"
+VM_PID="$(ps ax | grep "$VM_BIN_FILE" | grep "$VM_NAME" | cut -d\  -f1)"
 if [ -z "$VM_PID" ]; then
 	VM_PID="$UNKNOW"
 fi
