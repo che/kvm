@@ -98,7 +98,7 @@ if [ -f "\$RES_CONF" ]; then
 		if [ ! -x "\$DNS_D_CONF" ]; then
 			sudo touch "\$DNS_D_CONF"
 		fi
-		echo -n "address=/\$VM_HOST_NAME.\$VM_DOMAIN_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
+		echo -n "address=/\$VM_DOMAIN_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
 		sudo cp -f "\$RES_CONF" "\$DNS_RES_CONF" >/dev/null
 		if [ "\$?" == "0" ]; then
 			sudo cat "\$DNS_CONF" | grep "\$DNS_CONF_STR\$DNS_RES_CONF" >/dev/null
@@ -109,8 +109,9 @@ if [ -f "\$RES_CONF" ]; then
 		fi
 		sudo "/etc/init.d/\$(echo "\$DNS_CONF" | cut -d\/ -f3 | cut -d\. -f1)" restart
 	fi
-	sudo hostname "\$VM_HOST_NAME" >/dev/null
 	sudo nisdomainname "\$VM_DOMAIN_NAME" >/dev/null
+	
+	sudo hostname "\$VM_HOST_NAME" >/dev/null
 fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
 }
