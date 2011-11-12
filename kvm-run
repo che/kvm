@@ -116,6 +116,7 @@ if [ -f "\$RES_CONF" ]; then
 		sudo "/etc/init.d/\$(echo "\$DNS_CONF" | cut -d\/ -f3 | cut -d\. -f1)" restart
 	fi
 	sudo nisdomainname "\$VM_DOMAIN_NAME" >/dev/null
+	
 	sudo hostname "\$VM_HOST_NAME" >/dev/null
 fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
@@ -300,7 +301,7 @@ while [ $# -gt 0 ]; do
 	;;
 	* )
 		help
-		error_msg "Bad argument(s) value"
+		error_msg "Bad option(s)"
 	;;
 	esac
 done
