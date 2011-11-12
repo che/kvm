@@ -292,7 +292,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.4"
+		echo "Version: 1.5.5"
 		exit 0
 	;;
 	-h|--help )
@@ -341,7 +341,7 @@ if [ -z "$RAM_SIZE" ]; then
 	RAM_SIZE=$RAM_SIZE_DEFAULT
 fi
 
-# Checking CPU values.
+# CPU values checking.
 if [ -z "$CPU_CORES" ]; then
 	CPU_CORES=$CPU_CORES_DEFAULT
 fi
@@ -381,7 +381,7 @@ if [ -z "$TAP_ID" ]; then
 	error_msg "Could not set 'tap'"
 fi
 
-# Running KVM.
+# KVM running.
 $VM_BIN_FILE "${IMG_DIR}${IMG_FILE}" \
 	-name "$VM_NAME" \
 	-m "$RAM_SIZE" \
