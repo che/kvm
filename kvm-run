@@ -185,7 +185,7 @@ if [ -z "$DOMAIN_NAME" ]; then
 fi
 
 # Options definition.
-OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	error_msg "Bad option(s) value"
@@ -260,7 +260,7 @@ while [ $# -gt 0 ]; do
 		fi
 		shift 2
 	;;
-	-s|--guest-script )
+	-s|--guest-script-file )
 		if [ -x "$2" ] && [ -f "$2" ]; then
 			GUEST_SCRIPT="$(cat "$2")"
 		else
