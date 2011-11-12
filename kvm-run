@@ -7,6 +7,7 @@
 RES_CONF="/etc/resolv.conf"
 VM_USER="$(whoami)"
 VM_NAME="$VM_USER-"
+VM_BIN_FILE="kvm"
 VM_PID=""
 RAM_SIZE_DEFAULT="2048"
 RAM_SIZE_MAX="32768"
@@ -286,7 +287,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.2"
+		echo "Version: 1.5.4"
 		exit 0
 	;;
 	-h|--help )
@@ -376,7 +377,7 @@ if [ -z "$TAP_ID" ]; then
 fi
 
 # Running KVM.
-kvm "${IMG_DIR}${IMG_FILE}" \
+$VM_NAME "${IMG_DIR}${IMG_FILE}" \
 	-name "$VM_NAME" \
 	-m "$RAM_SIZE" \
 	-smp ${CPU_MAX},cores=${CPU_CORES},maxcpus=$CPU_MAX \
@@ -386,7 +387,7 @@ kvm "${IMG_DIR}${IMG_FILE}" \
 	-localtime$UI_MODE &
 
 # Definition VM PID.
-VM_PID="$(ps ax | grep "kvm" | grep "$VM_NAME" | cut -d\  -f1)"
+VM_PID="$(ps ax | grep "$VM_NAME" | grep "$VM_NAME" | cut -d\  -f1)"
 if [ -z "$VM_PID" ]; then
 	VM_PID="$UNKNOW"
 fi
