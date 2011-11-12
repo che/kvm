@@ -189,7 +189,7 @@ fi
 OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
-	exit 1
+	error_msg "Bad option(s) value"
 fi
 eval set -- "$OPTS"
 
@@ -292,7 +292,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.5"
+		echo "Version: 1.5.6"
 		exit 0
 	;;
 	-h|--help )
@@ -301,7 +301,7 @@ while [ $# -gt 0 ]; do
 	;;
 	* )
 		help
-		exit 1
+		error_msg "Bad argument(s) value"
 	;;
 	esac
 done
@@ -467,7 +467,7 @@ if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$
 	if [ -z "$GUEST_SCRIPT" ]; then
 		GUEST_SCRIPT="$(default_post_script)"
 	fi
-	sleep 4
+	sleep 2
 	$GUEST_CLI "${GUEST_USER}@${IP_ADDR}" "$GUEST_SCRIPT"
 fi
 
