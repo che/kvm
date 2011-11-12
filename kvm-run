@@ -50,7 +50,7 @@ REG_BR_IFACE="^[b][r][0-9][0-9]?$"
 REG_CPU="^[1-9][:][1-9]$"
 REG_GUEST_USER="^[0-9A-Za-z\_\-\.\:]+$"
 REG_GUEST_HOST_NAME="^[0-9A-Za-z][0-9A-Za-z\-]+$"
-REG_GUEST_DOMAIN_NAME="^[0-9A-Za-z][0-9A-Za-z\-\.][0-9A-Za-z\-\.]+$"
+REG_GUEST_DOMAIN_NAME="^([a-z0-9-]+(\.[a-z0-9-]+)*?\.[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})(:\d{4})?$"
 REG_ADDR="^[a][d][d][r][:]"
 
 # Print error message and exit.
@@ -104,7 +104,7 @@ if [ -f "\$RES_CONF" ]; then
 		if [ ! -x "\$DNS_D_CONF" ]; then
 			sudo touch "\$DNS_D_CONF"
 		fi
-		echo -n "address=/\$VM_DOMAIN_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
+		echo -n "address=/\$VM_HOST_NAME.\$VM_DOMAIN_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
 		sudo cp -f "\$RES_CONF" "\$DNS_RES_CONF" >/dev/null
 		if [ "\$?" == "0" ]; then
 			sudo cat "\$DNS_CONF" | grep "\$DNS_CONF_STR\$DNS_RES_CONF" >/dev/null
