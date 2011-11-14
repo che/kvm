@@ -94,6 +94,8 @@ VM_HOST_NAME="$GUEST_HOST_NAME"
 VM_HOST_LH="127.0.0.1"
 VM_HOST_IP="$IP_ADDR"
 RES_CONF="$RES_CONF"
+HOSTS_CONF="/etc/hosts"
+HOSTS_T_CONF="/etc/hosts.tmp"
 DNS_CONF="/etc/dnsmasq.conf"
 DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).\$(echo "\$RES_CONF" | cut -d\/ -f3)"
 DNS_D_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$VM_HOST_NAME.\$VM_DOMAIN_NAME"
@@ -113,10 +115,26 @@ if [ -f "\$RES_CONF" ]; then
 			fi
 			sudo sed -i "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
 		fi
+		if [ ! -x "\$HOSTS_T_CONF" ]; then
+			sudo touch "\$HOSTS_T_CONF"
+		fi
+		cat "\$HOSTS_CONF" | while read line; do
+			echo "\$line" | grep -E "^[#]" >/dev/null
+			if [ "\$?" == "0" ]; then
+				echo "\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+			else
+				(echo "\$line" | grep -w "\$VM_HOST_NAME" >/dev/null || echo "\$line" | grep -w "\$VM_HOST_NAME.\$VM_DOMAIN_NAME" >/dev/null)
+				if [ "\$?" == "0" ]; then
+					echo "#\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+				else
+					echo "\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+				fi
+			fi
+		done
+		sudo mv -f "\$HOSTS_T_CONF" "\$HOSTS_CONF"
 		sudo "/etc/init.d/\$(echo "\$DNS_CONF" | cut -d\/ -f3 | cut -d\. -f1)" restart
 	fi
 	sudo nisdomainname "\$VM_DOMAIN_NAME" >/dev/null
-	
 	sudo hostname "\$VM_HOST_NAME" >/dev/null
 fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
