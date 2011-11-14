@@ -1,3 +1,44 @@
 Management KVM machines.
 
 1) For bridge interface.
+
+  1.1) Host file /etc/network/interfaces example:
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet manual
+
+auto br0
+iface br0 inet static
+	network 10.0.0.0
+	gateway 10.0.0.1
+	address 10.0.0.4
+	broadcast 10.0.0.255
+	netmask 255.255.255.0
+	pre-up ifconfig eth0 down
+	pre-up brctl addbr br0
+	pre-up brctl addif br0 eth0
+	pre-up ifconfig br0 up
+	pre-up ifconfig eth0 up
+	pre-down ifconfig eth0 down
+	pre-down ifconfig br0 down
+	pre-down brctl delif br0 eth0
+	pre-down brctl delbr br0
+
+  1.2) Guest file /etc/network/interfaces example:
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
