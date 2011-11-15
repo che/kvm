@@ -100,6 +100,7 @@ DNS_CONF="/etc/dnsmasq.conf"
 DNS_RES_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).\$(echo "\$RES_CONF" | cut -d\/ -f3)"
 DNS_D_CONF="\$(echo "\$DNS_CONF" | cut -d\. -f1).d/\$VM_HOST_NAME.\$VM_DOMAIN_NAME"
 DNS_CONF_STR="resolv-file="
+REG_DNS_CONF_STR="^[r][e][s][o][l][v][-][f][i][l][e][=]"
 
 if [ -f "\$RES_CONF" ]; then
 	if [ -f "\$DNS_CONF" ]; then
@@ -111,7 +112,12 @@ if [ -f "\$RES_CONF" ]; then
 		if [ "\$?" == "0" ]; then
 			sudo cat "\$DNS_CONF" | grep "\$DNS_CONF_STR\$DNS_RES_CONF" >/dev/null
 			if [ "\$?" != "0" ]; then
-				sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
+				sudo cat "\$DNS_CONF" | grep -E "\$REG_DNS_CONF_STR" >/dev/null
+				if [ "\$?" == "0" ]; then
+					sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
+				else
+					sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
+				fi
 			fi
 			sudo sed -i "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
 		fi
