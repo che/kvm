@@ -121,19 +121,20 @@ if [ -f "\$RES_CONF" ]; then
 			fi
 			sudo sed -i "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
 		fi
-		if [ ! -x "\$HOSTS_T_CONF" ]; then
-			sudo touch "\$HOSTS_T_CONF"
+		if [ -x "\$HOSTS_T_CONF" ]; then
+			sudo rm -f "\$HOSTS_T_CONF"
 		fi
+		sudo touch "\$HOSTS_T_CONF"
 		cat "\$HOSTS_CONF" | while read line; do
 			echo "\$line" | grep -E "^[#]" >/dev/null
 			if [ "\$?" == "0" ]; then
-				echo "\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+				echo "\$line" | sudo tee --append "\$HOSTS_T_CONF" >/dev/null
 			else
 				(echo "\$line" | grep -w "\$VM_HOST_NAME" >/dev/null || echo "\$line" | grep -w "\$VM_HOST_NAME.\$VM_DOMAIN_NAME" >/dev/null)
 				if [ "\$?" == "0" ]; then
-					echo "#\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+					echo "#\$line" | sudo tee --append "\$HOSTS_T_CONF" >/dev/null
 				else
-					echo "\$line" | sudo tee "\$HOSTS_T_CONF" >/dev/null
+					echo "\$line" | sudo tee --append "\$HOSTS_T_CONF" >/dev/null
 				fi
 			fi
 		done
@@ -142,6 +143,7 @@ if [ -f "\$RES_CONF" ]; then
 	fi
 	sudo nisdomainname "\$VM_DOMAIN_NAME" >/dev/null
 	sudo hostname "\$VM_HOST_NAME" >/dev/null
+	echo -n "\$VM_HOST_NAME" | sudo tee "/etc/hostname" >/dev/null
 fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
 }
@@ -325,7 +327,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.7"
+		echo "Version: 1.5.8"
 		exit 0
 	;;
 	-h|--help )
