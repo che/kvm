@@ -181,7 +181,7 @@ def_mac_addr
 
 # Difinition host domain name.
 DOMAIN_NAME="$(domainname 2>/dev/null)"
-if [ "$DOMAIN_NAME" == "(none)" ]; then
+if !([ "$?" == "0" ] && [ "$DOMAIN_NAME" != "(none)" ]); then
 	DOMAIN_NAME=""
 fi
 if [ -z "$DOMAIN_NAME" ]; then
@@ -189,6 +189,15 @@ if [ -z "$DOMAIN_NAME" ]; then
 fi
 if [ -z "$DOMAIN_NAME" ]; then
 	DOMAIN_NAME="$(nisdomainname 2>/dev/null)"
+	if [ "$?" != "0" ]; then
+		DOMAIN_NAME=""
+	fi
+fi
+if [ -z "$DOMAIN_NAME" ]; then
+	DOMAIN_NAME="$(ypdomainname 2>/dev/null)"
+	if [ "$?" != "0" ]; then
+		DOMAIN_NAME=""
+	fi
 fi
 if [ -z "$DOMAIN_NAME" ]; then
 	DOMAIN_NAME="$(hostname --domain 2>/dev/null)"
@@ -310,7 +319,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.6"
+		echo "Version: 1.5.7"
 		exit 0
 	;;
 	-h|--help )
