@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Author: Pavel Chebotarev <che.pasha@gmail.com>
+#
+
+# Variables definition.
+USER="$(whoami)"
+DIR="kvm/"
+IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
+IMG_FILE_DEFAULT="$(basename "$IMG_DEFAULT")"
+IMG_DIR_DEFAULT="$(basedir "$IMG_DEFAULT")/"
+USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
+USER_DIR_DEFAULT="/home/$USER/$DIR"
+
+# Print error message and exit.
+function error_msg()
+{
+	echo "Error: $1"
+	exit 1
+}
+
+# Image file checking.
+if [ ! -x "$IMG_DEFAULT" ]; then
+	error_msg "No such file '$IMG_DEFAULT'"
+fi
+
+IMG_FILE="$IMG_FILE_DEFAULT"
+IMG_DIR="$IMG_DIR_DEFAULT"
+USER_FILE="$USER_FILE_DEFAULT"
+USER_DIR="$USER_DIR_DEFAULT"
+
+# Coping.
+mkdir -p "$USER_DIR"
+if [ "$?" == "0" ]; then
+	chmod -R 755 "$USER_DIR" && chown -R "$USER" "$USER_DIR"
+	cp -f "$IMG_DIR$IMG_FILE" "$USER_DIR$USER_FILE"
+	if [ "$?" == "0" ]; then
+		chmod 755 "$USER_DIR$USER_FILE" && chown "$USER" "$USER_DIR$USER_FILE"
+	fi
+fi
+
+exit $?
