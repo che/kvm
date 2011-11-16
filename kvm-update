@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# Author: Pavel Chebotarev <che.pasha@gmail.com>
+#
+
+# Variables definition.
+USER="$(whoami)"
+DIR="kvm/"
+IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
+
+# Print error message and exit.
+function error_msg()
+{
+	echo "Error: $1"
+	exit 1
+}
+
+exit $?
