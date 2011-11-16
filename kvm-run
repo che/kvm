@@ -61,7 +61,7 @@ function error_msg()
 	exit 1
 }
 
-# Checking file KVM image.
+# KVM image file checking.
 function check_img()
 {
 	if [ -z "$IMG" ]; then
@@ -78,14 +78,14 @@ function check_img()
 	fi
 }
 
-# Definition MAC address.
+# MAC address definition.
 function def_mac_addr()
 {
 	MAC_ADDR="$(echo "$MAC_ADDR" | tr 'a' 'A' | tr 'b' 'B' | tr 'c' 'C' | tr 'd' 'D' | tr 'e' 'E' | tr 'f' 'F')"
 	MAC_ADDR_="$(echo "$MAC_ADDR" | tr 'A' 'a' | tr 'B' 'b' | tr 'C' 'c' | tr 'D' 'd' | tr 'E' 'e' | tr 'F' 'f')"
 }
 
-# Runing script on guest machene after start up.
+# Running script on guest machene after start up if was specified.
 function default_post_script()
 {
 	cat <<D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
@@ -151,7 +151,7 @@ fi
 D_E_F_A_U_L_T__P_O_S_T__S_C_R_I_P_T
 }
 
-# Help message.
+# Help message definition.
 function help()
 {
 	cat <<H_E_L_P
@@ -187,10 +187,10 @@ Note:
 H_E_L_P
 }
 
-# Difinition default MAC address.
+# Default MAC address definition.
 def_mac_addr
 
-# Difinition host domain name.
+# Host domain name definition.
 DOMAIN_NAME="$(domainname 2>/dev/null)"
 if !([ "$?" == "0" ] && [ "$DOMAIN_NAME" != "(none)" ]); then
 	DOMAIN_NAME=""
@@ -330,7 +330,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.6.1"
+		echo "Version: 1.6.2"
 		exit 0
 	;;
 	-h|--help )
@@ -397,7 +397,7 @@ else
 	MAC_ADDR_STR=""
 fi
 
-# Definition full VM name.
+# VM full name definition.
 VM_NAME="$VM_NAME$(echo "$MAC_ADDR_" | sed "s/\://g")"
 
 # BR_IFACE value checking.
@@ -405,7 +405,7 @@ if [ -z "$BR_IFACE" ]; then
 	BR_IFACE=$BR_IFACE_DEFAULT
 fi
 
-# Set TAP interface.
+# TAP interface definition.
 for t in $(seq 0 127); do
 	MSG="$(sudo tunctl -u $VM_USER -t tap$t 2>/dev/null)"
 	if [ "$?" == "0" ]; then
@@ -429,7 +429,7 @@ $VM_BIN_FILE "${IMG_DIR}${IMG_FILE}" \
 	-net tap,vlan=0,ifname=tap${TAP_ID},script=no,downscript=no \
 	-localtime$UI_MODE &
 
-# Definition VM PID.
+# VM PID definition.
 VM_PID="$(ps ax | grep "$VM_BIN_FILE" | grep "$VM_NAME" | cut -d\  -f1)"
 if [ -z "$VM_PID" ]; then
 	VM_PID="$UNKNOW"
