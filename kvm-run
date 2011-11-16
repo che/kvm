@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Author: Pavel Chebotarev <che.pasha@gmail.com>
 #
@@ -20,6 +20,7 @@ IMG=""
 MAC_ADDR_STATUS=""
 MAC_ADDR_STR=""
 MAC_ADDR="00$(hexdump -n 5 -v -e '/1 ":%02X"' /dev/urandom)"
+MAC_ADDR_=""
 IP_ADDR=""
 BR_IFACE_DEFAULT="br0"
 BR_IFACE=""
@@ -105,9 +106,10 @@ REG_DNS_CONF_C_STR="[#][r][e][s][o][l][v][-][f][i][l][e][=]"
 
 if [ -f "\$RES_CONF" ]; then
 	if [ -f "\$DNS_CONF" ]; then
-		if [ ! -x "\$DNS_D_CONF" ]; then
-			sudo touch "\$DNS_D_CONF"
+		if [ -x "\$DNS_D_CONF" ]; then
+			sudo rm -f "\$DNS_D_CONF"
 		fi
+		sudo touch "\$DNS_D_CONF"
 		echo -n "address=/\$VM_HOST_NAME.\$VM_DOMAIN_NAME/\$VM_HOST_IP" | sudo tee "\$DNS_D_CONF" >/dev/null
 		sudo cp -f "\$RES_CONF" "\$DNS_RES_CONF" >/dev/null
 		if [ "\$?" == "0" ]; then
@@ -328,7 +330,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.5.9"
+		echo "Version: 1.5.10"
 		exit 0
 	;;
 	-h|--help )
