@@ -7,6 +7,8 @@
 USER="$(whoami)"
 DIR="kvm/"
 IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
+IMG_FILE_DEFAULT="$(basename "$IMG_DEFAULT")"
+IMG_DIR_DEFAULT="$(basedir "$IMG_DEFAULT")/"
 
 # Print error message and exit.
 function error_msg()
