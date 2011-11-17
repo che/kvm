@@ -13,7 +13,7 @@ RAM_SIZE_DEFAULT="2048"
 RAM_SIZE_MAX="32768"
 RAM_SIZE_MIN="64"
 RAM_SIZE=""
-IMG_DEFAULT="/root/kvm/ubuntu-server-10.04-64.img"
+IMG_DEFAULT="/home/$USER/$VM_BIN_FILE/ubuntu-server-10.04-64.img"
 IMG_DIR=""
 IMG_FILE=""
 IMG=""
@@ -330,7 +330,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.6.2"
+		echo "Version: 1.7.0"
 		exit 0
 	;;
 	-h|--help )
