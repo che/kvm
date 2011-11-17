@@ -19,10 +19,65 @@ function error_msg()
 	exit 1
 }
 
+# Help message definition.
+function help()
+{
+	cat <<H_E_L_P
+
+Usage: $(basename $0) [options]
+
+Options:
+  -f, --from     Set host name of guest machine
+                 (by default $GUEST_HOST_NAME_DEFAULT).
+  -t, --to       Set domain name of guest machine
+                 (by default host domain name).
+  -v, --version  Print the current version.
+  -h, --help     Show this message.
+
+H_E_L_P
+}
+
 # Image file checking.
 if [ ! -x "$IMG_DEFAULT" ]; then
 	error_msg "No such file '$IMG_DEFAULT'"
 fi
+
+# Options definition.
+OPTS="$(getopt -o "f:t:vh" -l "from:,to:,version,help" -a -- "$@" 2>/dev/null)"
+if [ "$?" != "0" ]; then
+	help
+	error_msg "Bad option(s) value"
+fi
+eval set -- "$OPTS"
+
+# Options parsing.
+while [ $# -gt 0 ]; do
+	case $1 in
+	-- )
+		shift
+	;;
+	-f|--from )
+		
+		shift 2
+	;;
+	-t|--to )
+		
+		shift 2
+	;;
+	-v|--version )
+		echo "Version: 0.2.0"
+		exit 0
+	;;
+	-h|--help )
+		help
+		exit 0
+	;;
+	* )
+		help
+		error_msg "Bad option(s)"
+	;;
+	esac
+done
 
 IMG_FILE="$IMG_FILE_DEFAULT"
 IMG_DIR="$IMG_DIR_DEFAULT"
