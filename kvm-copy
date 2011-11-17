@@ -8,7 +8,7 @@ USER="$(whoami)"
 DIR="kvm/"
 IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
 IMG_FILE_DEFAULT="$(basename "$IMG_DEFAULT")"
-IMG_DIR_DEFAULT="$(basedir "$IMG_DEFAULT")/"
+IMG_DIR_DEFAULT="$(dirname "$IMG_DEFAULT")/"
 USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
 USER_DIR_DEFAULT="/home/$USER/$DIR"
 
@@ -38,9 +38,9 @@ H_E_L_P
 }
 
 # Image file checking.
-if [ ! -x "$IMG_DEFAULT" ]; then
-	error_msg "No such file '$IMG_DEFAULT'"
-fi
+#if [ ! -x "$IMG_DEFAULT" ]; then
+#	error_msg "No such file '$IMG_DEFAULT'"
+#fi
 
 # Options definition.
 OPTS="$(getopt -o "f:t:vh" -l "from:,to:,version,help" -a -- "$@" 2>/dev/null)"
@@ -65,7 +65,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 0.2.0"
+		echo "Version: 0.2.1"
 		exit 0
 	;;
 	-h|--help )
