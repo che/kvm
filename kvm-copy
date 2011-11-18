@@ -114,7 +114,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.1"
+		echo "Version: 1.0.2"
 		exit 0
 	;;
 	-h|--help )
@@ -185,9 +185,9 @@ if [ ! -x "$USER_DIR" ]; then
 fi
 
 # Coping.
-cp $FORCE"$IMG_DIR$IMG_FILE" "$USER_DIR$USER_FILE"
+sudo cp $FORCE"$IMG_DIR$IMG_FILE" "$USER_DIR$USER_FILE"
 if [ "$?" == "0" ]; then
-	chown "$USER" "$USER_DIR$USER_FILE" && chmod 755 "$USER_DIR$USER_FILE"
+	sudo chown "$USER" "$USER_DIR$USER_FILE" && chmod 644 "$USER_DIR$USER_FILE"
 	if [ "$?" != "0" ]; then
 		error_msg "Can not set permission for file '$USER_DIR$USER_FILE'"
 	fi
