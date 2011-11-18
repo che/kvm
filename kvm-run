@@ -330,7 +330,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.7.1"
+		echo "Version: 1.7.2"
 		exit 0
 	;;
 	-h|--help )
@@ -430,7 +430,7 @@ $VM_BIN_FILE "${IMG_DIR}${IMG_FILE}" \
 	-localtime$UI_MODE &
 
 # VM PID definition.
-VM_PID="$(ps ax | grep "$VM_BIN_FILE" | grep "$VM_NAME" | cut -d\  -f1)"
+VM_PID="$(ps ax | grep "$VM_BIN_FILE" | grep "$VM_NAME" | while read l; do echo $l;break;done | cut -d\  -f1)"
 if [ -z "$VM_PID" ]; then
 	VM_PID="$UNKNOW"
 fi
