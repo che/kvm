@@ -438,24 +438,24 @@ fi
 # Print basic information about the running VM.
 echo ""
 echo "KVM:"
-echo "  Image:"
-echo "    Directory: $IMG_DIR"
-echo "    File: $IMG_FILE"
-echo "  Name:"
-echo "    User: $VM_USER"
-echo "    Domain: $DOMAIN_NAME"
-echo "    Host: $(hostname)"
-echo "    Machine: $VM_NAME"
-echo "  PID: $VM_PID"
-echo "  CPU:"
-echo "    Cores: $CPU_CORES"
-echo "    Max: $CPU_MAX"
-echo "  RAM size: ${RAM_SIZE}M"
-echo "  Interface:"
-echo "    Bridge: $BR_IFACE"
-echo "    TAP: tap$TAP_ID"
-echo "  Address:"
-echo "    MAC: $MAC_ADDR"
+echo "    Image:"
+echo "        Directory: $IMG_DIR"
+echo "        File: $IMG_FILE"
+echo "    Name:"
+echo "        User: $VM_USER"
+echo "        Domain: $DOMAIN_NAME"
+echo "        Host: $(hostname)"
+echo "        Machine: $VM_NAME"
+echo "    PID: $VM_PID"
+echo "    CPU:"
+echo "        Cores: $CPU_CORES"
+echo "        Max: $CPU_MAX"
+echo "    RAM size: ${RAM_SIZE}M"
+echo "    Interface:"
+echo "        Bridge: $BR_IFACE"
+echo "        TAP: tap$TAP_ID"
+echo "    Address:"
+echo "        MAC: $MAC_ADDR"
 
 # IP address definition if MAC address has been defined.
 if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
@@ -491,14 +491,14 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 fi
 
 # Print IP address.
-echo "    IP: $IP_ADDR"
+echo "        IP: $IP_ADDR"
 
 # Guest values connection.
-echo "  Guest:"
-echo "    Name:"
-echo "      User: $GUEST_USER"
-echo "      Domain: $GUEST_DOMAIN_NAME"
-echo "      Host: $GUEST_HOST_NAME"
+echo "    Guest:"
+echo "        Name:"
+echo "            User: $GUEST_USER"
+echo "            Domain: $GUEST_DOMAIN_NAME"
+echo "            Host: $GUEST_HOST_NAME"
 
 # Guest script running.
 if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$UNKNOW" ]; then
@@ -510,7 +510,7 @@ if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$
 fi
 
 # Print guest script status.
-echo "    Script status: $?"
+echo "        Script status: $?"
 
 # Print basic information about the running VM(ending).
 echo ""
