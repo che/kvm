@@ -28,6 +28,39 @@ function error_msg()
 	exit 1
 }
 
+# Image directory and file checking.
+function check_img()
+{
+	echo "$1" | grep -E "$REG_SEPARATOR" >/dev/null
+	STAT="$?"
+	sudo stat "$IMG_DIR_DEFAULT$1" 2>/dev/null | grep "Size:" | grep "file" >/dev/null
+	if [ "$?" == "0" ] && [ "$STAT" != "0" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+		IMG_FILE="$1"
+	else
+		STAT="$(sudo stat "$1" 2>/dev/null | grep "Size:")"
+		if [ "$?" == "0" ]; then
+			echo "$STAT" | grep "directory" >/dev/null
+			if [ "$?" == "0" ]; then
+				IMG_DIR="$(sudo bash -c "cd \"$1\" && pwd" 2>/dev/null)/"
+				IMG_FILE="$IMG_FILE_DEFAULT"
+			else
+				echo "$STAT" | grep "file" >/dev/null
+				if [ "$?" == "0" ]; then
+					IMG_DIR="$(dirname "$1")"
+					IMG_DIR="$(sudo bash -c "cd \"$IMG_DIR\" && pwd" 2>/dev/null)/"
+					IMG_FILE="$(basename "$1")"
+				else
+					error_msg "No such file '$1'"
+				fi
+			fi
+		else
+			error_msg "No such file or directory '$1'"
+		fi
+	fi
+	STAT=""
+}
+
 # Help message definition.
 function help()
 {
@@ -64,34 +97,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-s|--source )
-		echo "$2" | grep -E "$REG_SEPARATOR" >/dev/null
-		STAT="$?"
-		sudo stat "$IMG_DIR_DEFAULT$2" 2>/dev/null | grep "Size:" | grep "file" >/dev/null
-		if [ "$?" == "0" ] && [ "$STAT" != "0" ]; then
-			IMG_DIR="$IMG_DIR_DEFAULT"
-			IMG_FILE="$2"
-		else
-			STAT="$(sudo stat "$2" 2>/dev/null | grep "Size:")"
-			if [ "$?" == "0" ]; then
-				echo "$STAT" | grep "directory" >/dev/null
-				if [ "$?" == "0" ]; then
-					IMG_DIR="$(sudo bash -c "cd \"$2\" && pwd" 2>/dev/null)/"
-					IMG_FILE="$IMG_FILE_DEFAULT"
-				else
-					echo "$STAT" | grep "file" >/dev/null
-					if [ "$?" == "0" ]; then
-						IMG_DIR="$(dirname "$2")"
-						IMG_DIR="$(sudo bash -c "cd \"$IMG_DIR\" && pwd" 2>/dev/null)/"
-						IMG_FILE="$(basename "$2")"
-					else
-						error_msg "No such file '$2'"
-					fi
-				fi
-			else
-				error_msg "No such file or directory '$2'"
-			fi
-		fi
-		STAT=""
+		check_img "$2"
 		shift 2
 	;;
 	-d|--destination )
@@ -116,7 +122,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.3"
+		echo "Version: 1.0.4"
 		exit 0
 	;;
 	-h|--help )
@@ -130,26 +136,15 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-# 
-if [ -z "$IMG_DIR" ]; then
-	IMG_DIR="$IMG_DIR_DEFAULT"
-fi
-
-# 
-sudo stat "$IMG_DIR" 2>/dev/null | grep "Size:" | grep "directory" >/dev/null
-if [ "$?" != "0" ]; then
-	error_msg "No such directory '$IMG_DIR'"
-fi
-
-# 
-if [ -z "$IMG_FILE" ]; then
-	IMG_FILE="$IMG_FILE_DEFAULT"
-fi
-
-# 
-sudo stat "$IMG_DIR$IMG_FILE" 2>/dev/null | grep "Size:" | grep "file" >/dev/null
-if [ "$?" != "0" ]; then
-	error_msg "No such file '$IMG_DIR$IMG_FILE'"
+# Image directory and file values checking.
+if [ -z "$IMG_DIR" ] || [ -z "$IMG_FILE" ]; then
+	if [ -z "$IMG_DIR" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+	fi
+	if [ -z "$IMG_FILE" ]; then
+		IMG_FILE="$IMG_FILE_DEFAULT"
+	fi
+	check_img "$IMG_DIR$IMG_FILE"
 fi
 
 # 
