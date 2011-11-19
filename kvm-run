@@ -330,7 +330,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.7.2"
+		echo "Version: 1.7.1"
 		exit 0
 	;;
 	-h|--help )
@@ -507,10 +507,9 @@ if [ -z "$GUEST_SCRIPT_STATUS" ] && [ ! -z "$GUEST_USER" ] && [ "$IP_ADDR" != "$
 	fi
 	sleep 2
 	$GUEST_CLI "${GUEST_USER}@${IP_ADDR}" "$GUEST_SCRIPT"
+	# Print guest script status.
+	echo "        Script status: $?"
 fi
-
-# Print guest script status.
-echo "        Script status: $?"
 
 # Print basic information about the running VM(ending).
 echo ""
