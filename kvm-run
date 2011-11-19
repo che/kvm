@@ -13,10 +13,13 @@ RAM_SIZE_DEFAULT="2048"
 RAM_SIZE_MAX="32768"
 RAM_SIZE_MIN="64"
 RAM_SIZE=""
-IMG_DEFAULT="/home/$USER/$VM_BIN_FILE/ubuntu-server-10.04-64.img"
+IMG_DIR_DEFAULT="/$USER/$VM_BIN_FILE/"
+if [ "$USER" != "root" ]; then
+	IMG_DIR_DEFAULT="/home$IMG_DIR_DEFAULT"
+fi
 IMG_DIR=""
+IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
 IMG_FILE=""
-IMG=""
 MAC_ADDR_STATUS=""
 MAC_ADDR_STR=""
 MAC_ADDR="00$(hexdump -n 5 -v -e '/1 ":%02X"' /dev/urandom)"
@@ -53,6 +56,7 @@ REG_GUEST_USER="^[0-9A-Za-z\_\-\.\:]+$"
 REG_GUEST_HOST_NAME="^[0-9A-Za-z][0-9A-Za-z\-]+$"
 REG_GUEST_DOMAIN_NAME="^([a-z0-9-]+(\.[a-z0-9-]+)*?\.[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})(:\d{4})?$"
 REG_ADDR="^[a][d][d][r][:]"
+REG_SEPARATOR="[\/]"
 
 # Print error message and exit.
 function error_msg()
@@ -64,18 +68,34 @@ function error_msg()
 # KVM image file checking.
 function check_img()
 {
-	if [ -z "$IMG" ]; then
-		error_msg "File KVM image not has been defined"
-	fi
-	if [ "$IMG" == "$IMG_DEFAULT" ]; then
-		IMG_DIR="$(dirname "$IMG")/"
+	echo "$1" | grep -E "$REG_SEPARATOR" >/dev/null
+	STAT="$?"
+	sudo stat "$IMG_DIR_DEFAULT$1" 2>/dev/null | grep "Size:" | grep "file" >/dev/null
+	if [ "$?" == "0" ] && [ "$STAT" != "0" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+		IMG_FILE="$1"
 	else
-		IMG_DIR="$(cd $(dirname "$IMG") && pwd)/"
+		STAT="$(sudo stat "$1" 2>/dev/null | grep "Size:")"
+		if [ "$?" == "0" ]; then
+			echo "$STAT" | grep "directory" >/dev/null
+			if [ "$?" == "0" ]; then
+				IMG_DIR="$(sudo bash -c "cd \"$1\" && pwd" 2>/dev/null)/"
+				IMG_FILE="$IMG_FILE_DEFAULT"
+			else
+				echo "$STAT" | grep "file" >/dev/null
+				if [ "$?" == "0" ]; then
+					IMG_DIR="$(dirname "$1")"
+					IMG_DIR="$(sudo bash -c "cd \"$IMG_DIR\" && pwd" 2>/dev/null)/"
+					IMG_FILE="$(basename "$1")"
+				else
+					error_msg "No such file '$1'"
+				fi
+			fi
+		else
+			error_msg "No such file or directory '$1'"
+		fi
 	fi
-	IMG_FILE="$(basename "$IMG")"
-	if [ ! -f "$IMG_DIR$IMG_FILE" ]; then
-		error_msg "No such file '$IMG_DIR$IMG_FILE'"
-	fi
+	STAT=""
 }
 
 # MAC address definition.
@@ -160,7 +180,8 @@ Usage: $(basename $0) [options]
 
 Options:
     -i, --kvm-image          Set file KVM VM image
-                             (by default $IMG_DEFAULT).
+                             (by default directory $IMG_DIR_DEFAULT
+                             and file $IMG_FILE_DEFAULT).
     -r, --ram-size           Set RAM size(M)(by default $RAM_SIZE_DEFAULT).
                              Size: min=$RAM_SIZE_MIN and max=$RAM_SIZE_MAX.
     -m, --mac-address        Set MAC address(by default generated).
@@ -238,8 +259,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-i|--kvm-image )
-		IMG="$2"
-		check_img
+		check_img "$2"
 		shift 2
 	;;
 	-r|--ram-size )
@@ -368,10 +388,15 @@ if [ -z "$GUEST_SCRIPT_STATUS" ]; then
 	fi
 fi
 
-# IMG value checking.
-if [ -z "$IMG" ]; then
-	IMG=$IMG_DEFAULT
-	check_img
+# Image values checking.
+if [ -z "$IMG_DIR" ] || [ -z "$IMG_FILE" ]; then
+	if [ -z "$IMG_DIR" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+	fi
+	if [ -z "$IMG_FILE" ]; then
+		IMG_FILE="$IMG_FILE_DEFAULT"
+	fi
+	check_img "$IMG_DIR$IMG_FILE"
 fi
 
 # RAM_SIZE value checking.
@@ -420,7 +445,7 @@ if [ -z "$TAP_ID" ]; then
 fi
 
 # KVM running.
-$VM_BIN_FILE "${IMG_DIR}${IMG_FILE}" \
+$VM_BIN_FILE "$IMG_DIR$IMG_FILE" \
 	-name "$VM_NAME" \
 	-m "$RAM_SIZE" \
 	-smp ${CPU_MAX},cores=${CPU_CORES},maxcpus=$CPU_MAX \
