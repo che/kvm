@@ -481,6 +481,7 @@ echo "        Bridge: $BR_IFACE"
 echo "        TAP: tap$TAP_ID"
 echo "    Address:"
 echo "        MAC: $MAC_ADDR"
+echo -n "        IP: "
 
 # IP address definition if MAC address has been defined.
 if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
@@ -516,7 +517,7 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 fi
 
 # Print IP address.
-echo "        IP: $IP_ADDR"
+echo "$IP_ADDR"
 
 # Guest values connection.
 echo "    Guest:"
