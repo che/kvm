@@ -4,14 +4,14 @@
 #
 
 # Variables definition.
-USER="$(whoami)"
+IMG_USER="$(whoami)"
 DIR="kvm/"
 IMG_DIR_DEFAULT="/root/${DIR}"
 IMG_DIR=""
 IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
 IMG_FILE=""
-USER_DIR_DEFAULT="/$USER/$DIR"
-if [ "$USER" != "root" ]; then
+USER_DIR_DEFAULT="/$IMG_USER/$DIR"
+if [ "$IMG_USER" != "root" ]; then
 	USER_DIR_DEFAULT="/home$USER_DIR_DEFAULT"
 fi
 USER_DIR=""
@@ -122,7 +122,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.5"
+		echo "Version: 1.0.6"
 		exit 0
 	;;
 	-h|--help )
@@ -160,6 +160,7 @@ fi
 # Print basic information coping.
 echo ""
 echo "KVM:"
+echo "    User: $IMG_USER"
 echo "    Source:"
 echo "        Directory: $IMG_DIR"
 echo "        File: $IMG_FILE"
@@ -168,7 +169,7 @@ echo "        Directory: $USER_DIR"
 echo "        File: $USER_FILE"
 echo ""
 
-# 'Source' value and 'destination' value comparing
+# 'Source' value and 'destination' value comparing.
 if [ "$IMG_DIR$IMG_FILE" == "$USER_DIR$USER_FILE" ]; then
 	error_msg "'Source' value and 'destination' value are equal"
 fi
