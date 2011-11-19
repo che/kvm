@@ -123,7 +123,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-p|--permission )
-		echo "$2" | grep "$REG_PERMISSION"
+		echo "$2" | grep "$REG_PERMISSION" >/dev/null
 		if [ "$?" == "0" ]; then
 			DEST_FILE_PERM="$2"
 		else
