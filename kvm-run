@@ -350,7 +350,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.7.1"
+		echo "Version: 1.8.0"
 		exit 0
 	;;
 	-h|--help )
@@ -388,7 +388,7 @@ if [ -z "$GUEST_SCRIPT_STATUS" ]; then
 	fi
 fi
 
-# Image values checking.
+# Image directory and file values checking.
 if [ -z "$IMG_DIR" ] || [ -z "$IMG_FILE" ]; then
 	if [ -z "$IMG_DIR" ]; then
 		IMG_DIR="$IMG_DIR_DEFAULT"
