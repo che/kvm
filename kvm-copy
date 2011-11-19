@@ -18,7 +18,10 @@ USER_DIR=""
 USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
 USER_FILE=""
 FORCE="--force "
+DEST_FILE_PERM_DEFAULT="644"
+DEST_FILE_PERM=""
 
+REG_PERMISSION="^[04567][04567][04567]$"
 REG_SEPARATOR="[\/]"
 
 # Print error message and exit.
@@ -75,6 +78,8 @@ Options:
     -d, --destination  Set destination directory or file
                        (by default directory $USER_DIR_DEFAULT
                        and file $USER_FILE_DEFAULT).
+    -p, --permission   Set permission for destination file
+                       (by default $DEST_FILE_PERM_DEFAULT).
     -F, --not-force    Set not force coping.
     -v, --version      Print the current version.
     -h, --help         Show this message.
@@ -83,7 +88,7 @@ H_E_L_P
 }
 
 # Options definition.
-OPTS="$(getopt -o "s:d:Fvh" -l "source:,destination:,not-force,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "s:d:p:Fvh" -l "source:,destination:,permission:,not-force,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	error_msg "Bad option(s) value"
@@ -117,12 +122,21 @@ while [ $# -gt 0 ]; do
 		fi
 		shift 2
 	;;
+	-p|--permission )
+		echo "$2" | grep "$REG_PERMISSION"
+		if [ "$?" == "0" ]; then
+			DEST_FILE_PERM="$2"
+		else
+			error_msg "Incorrectly permission value '$2'"
+		fi
+		shift 2
+	;;
 	-F|--not-force )
 		FORCE=""
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.6"
+		echo "Version: 1.1.0"
 		exit 0
 	;;
 	-h|--help )
@@ -155,6 +169,11 @@ fi
 # User image file checking.
 if [ -z "$USER_FILE" ]; then
 	USER_FILE="$USER_FILE_DEFAULT"
+fi
+
+# User image file permission checking.
+if [ -z "$DEST_FILE_PERM" ]; then
+	DEST_FILE_PERM="$DEST_FILE_PERM_DEFAULT"
 fi
 
 # Print basic information coping.
@@ -190,7 +209,7 @@ fi
 # Coping.
 sudo cp $FORCE"$IMG_DIR$IMG_FILE" "$USER_DIR$USER_FILE"
 if [ "$?" == "0" ]; then
-	sudo chown "$USER" "$USER_DIR$USER_FILE" && chmod 644 "$USER_DIR$USER_FILE"
+	sudo chown "$USER" "$USER_DIR$USER_FILE" && chmod "$DEST_FILE_PERM" "$USER_DIR$USER_FILE"
 	if [ "$?" != "0" ]; then
 		error_msg "Can not set permission for file '$USER_DIR$USER_FILE'"
 	fi
