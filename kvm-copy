@@ -6,15 +6,17 @@
 # Variables definition.
 USER="$(whoami)"
 DIR="kvm/"
-IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
-IMG_FILE_DEFAULT="$(basename "$IMG_DEFAULT")"
-IMG_FILE=""
-IMG_DIR_DEFAULT="$(dirname "$IMG_DEFAULT")/"
+IMG_DIR_DEFAULT="/root/${DIR}"
 IMG_DIR=""
+IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
+IMG_FILE=""
+USER_DIR_DEFAULT="/$USER/$DIR"
+if [ "$USER" != "root" ]; then
+	USER_DIR_DEFAULT="/home$USER_DIR_DEFAULT"
+fi
+USER_DIR=""
 USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
 USER_FILE=""
-USER_DIR_DEFAULT="/home/$USER/$DIR"
-USER_DIR=""
 FORCE="--force "
 
 REG_SEPARATOR="[\/]"
@@ -114,7 +116,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.2"
+		echo "Version: 1.0.4"
 		exit 0
 	;;
 	-h|--help )
@@ -170,6 +172,11 @@ echo "    Destination:"
 echo "        Directory: $USER_DIR"
 echo "        File: $USER_FILE"
 echo ""
+
+# 
+if [ "$IMG_DIR$IMG_FILE" == "$USER_DIR$USER_FILE" ]; then
+	error_msg "'Source' value and 'destination' value are equal"
+fi
 
 # 
 if [ ! -x "$USER_DIR" ]; then
