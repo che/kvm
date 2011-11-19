@@ -116,7 +116,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.4"
+		echo "Version: 1.0.3"
 		exit 0
 	;;
 	-h|--help )
