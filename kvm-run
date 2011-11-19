@@ -13,8 +13,8 @@ RAM_SIZE_DEFAULT="2048"
 RAM_SIZE_MAX="32768"
 RAM_SIZE_MIN="64"
 RAM_SIZE=""
-IMG_DIR_DEFAULT="/$USER/$VM_BIN_FILE/"
-if [ "$USER" != "root" ]; then
+IMG_DIR_DEFAULT="/$VM_USER/$VM_BIN_FILE/"
+if [ "$VM_USER" != "root" ]; then
 	IMG_DIR_DEFAULT="/home$IMG_DIR_DEFAULT"
 fi
 IMG_DIR=""
@@ -350,7 +350,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.8.1"
+		echo "Version: 1.8.2"
 		exit 0
 	;;
 	-h|--help )
