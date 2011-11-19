@@ -122,7 +122,7 @@ while [ $# -gt 0 ]; do
 		shift
 	;;
 	-v|--version )
-		echo "Version: 1.0.4"
+		echo "Version: 1.0.5"
 		exit 0
 	;;
 	-h|--help )
@@ -147,17 +147,17 @@ if [ -z "$IMG_DIR" ] || [ -z "$IMG_FILE" ]; then
 	check_img "$IMG_DIR$IMG_FILE"
 fi
 
-# 
+# User image directory checking.
 if [ -z "$USER_DIR" ]; then
 	USER_DIR="$USER_DIR_DEFAULT"
 fi
 
-# 
+# User image file checking.
 if [ -z "$USER_FILE" ]; then
 	USER_FILE="$USER_FILE_DEFAULT"
 fi
 
-# 
+# Print basic information coping.
 echo ""
 echo "KVM:"
 echo "    Source:"
@@ -168,12 +168,12 @@ echo "        Directory: $USER_DIR"
 echo "        File: $USER_FILE"
 echo ""
 
-# 
+# 'Source' value and 'destination' value comparing
 if [ "$IMG_DIR$IMG_FILE" == "$USER_DIR$USER_FILE" ]; then
 	error_msg "'Source' value and 'destination' value are equal"
 fi
 
-# 
+# User directory making and permission setting.
 if [ ! -x "$USER_DIR" ]; then
 	mkdir -p "$USER_DIR"
 	if [ "$?" == "0" ]; then
