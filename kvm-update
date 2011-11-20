@@ -4,11 +4,19 @@
 #
 
 # Variables definition.
-USER="$(whoami)"
-DIR="kvm/"
-IMG_DEFAULT="/root/${DIR}ubuntu-server-10.04-64.img"
-IMG_FILE_DEFAULT="$(basename "$IMG_DEFAULT")"
-IMG_DIR_DEFAULT="$(basedir "$IMG_DEFAULT")/"
+SCRIPT_DIR="$(dirname "$0")/"
+IMG_USER="$(whoami)"
+IMG_BIN_FILE="kvm"
+IMG_DIR_DEFAULT="/$IMG_USER/$IMG_BIN_FILE/"
+if [ "$IMG_USER" != "root" ]; then
+	IMG_DIR_DEFAULT="/home$IMG_DIR_DEFAULT"
+fi
+IMG_DIR=""
+IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
+IMG_FILE=""
+IMG_FILE_EXT_CURRENT=".current"
+IMG_FILE_EXT_OLD=".old"
+IMG_FILE_EXT_NEW=".new"
 
 # Print error message and exit.
 function error_msg()
