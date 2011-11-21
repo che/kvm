@@ -13,16 +13,8 @@ IMG_DIR_DEFAULT="/home/$DIR$DIR"
 IMG_DIR=""
 IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
 IMG_FILE=""
-USER_DIR_DEFAULT="/$IMG_USER/$DIR"
-if [ "$IMG_USER" != "root" ]; then
-	USER_DIR_DEFAULT="/home$USER_DIR_DEFAULT"
-fi
-USER_DIR=""
-USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
-USER_FILE=""
-DEST_FILE_PERM_DEFAULT="644"
+DEST_FILE_PERM_DEFAULT="400"
 DEST_FILE_PERM=""
-IMG_FILE_EXT_CURRENT=".current"
 IMG_FILE_EXT_OLD=".old"
 IMG_FILE_EXT_NEW=".new"
 ARGS=""
@@ -95,7 +87,7 @@ while [ $# -gt 0 ]; do
 		exit 0
 	;;
 	-v|--version )
-		echo "Version: 1.0.0"
+		echo "Version: 1.0.2"
 		exit 0
 	;;
 	* )
@@ -131,13 +123,19 @@ if [ -z "$ARGS_NEW_STATUS" ]; then
 	ARGS_NEW="$ARGS_NEW --kvm-image \"$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW\""
 fi
 
+# Image destination file permission checking.
+if [ -z "$DEST_FILE_PERM" ]; then
+	DEST_FILE_PERM="$DEST_FILE_PERM_DEFAULT"
+fi
+
 # Renaming and coping.
 "$SCRIPT_DIR$BIN_COPY" --source "$IMG_DIR$IMG_FILE" --destination "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW"
 sudo mv --force "$IMG_DIR$IMG_FILE" "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_OLD"
 
+# KVM running for updating.
 "$SCRIPT_DIR$BIN_RUN" $ARGS_NEW
 if [ "$?" != "0" ]; then
-	sudo mv --force "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW" "$IMG_DIR$IMG_FILE" && sudo chmod 400 "$IMG_DIR$IMG_FILE"
+	sudo mv --force "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW" "$IMG_DIR$IMG_FILE" && sudo chmod "$DEST_FILE_PERM" "$IMG_DIR$IMG_FILE"
 fi
 
 exit $?
