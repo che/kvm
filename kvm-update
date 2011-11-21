@@ -94,6 +94,10 @@ while [ $# -gt 0 ]; do
 		"$SCRIPT_DIR$BIN_RUN" --help
 		exit 0
 	;;
+	-v|--version )
+		echo "Version: 1.0.0"
+		exit 0
+	;;
 	* )
 		shift
 	;;
@@ -116,12 +120,12 @@ for i in $ARGS; do
 	if [ "$ARGS_NEW_STATUS" == "yes" ]; then
 		ARGS_NEW="$ARGS_NEW $IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW"
 		ARGS_NEW_STATUS="no"
+	else
+		if [ "$i" == "-i" ] || [ "$i" == "--kvm-image" ]; then
+			ARGS_NEW_STATUS="yes"
+		fi
+		ARGS_NEW="$ARGS_NEW $i"
 	fi
-	if [ "$i" == "-i" ] || [ "$i" == "--kvm-image" ]; then
-		ARGS_NEW_STATUS="yes"
-	fi
-	echo $i
-	ARGS_NEW="$ARGS_NEW $i"
 done
 if [ -z "$ARGS_NEW_STATUS" ]; then
 	ARGS_NEW="$ARGS_NEW --kvm-image \"$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW\""
@@ -129,10 +133,11 @@ fi
 
 # Renaming and coping.
 "$SCRIPT_DIR$BIN_COPY" --source "$IMG_DIR$IMG_FILE" --destination "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW"
-mv --force "$IMG_DIR$IMG_FILE" "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_OLD"
+sudo mv --force "$IMG_DIR$IMG_FILE" "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_OLD"
 
-echo $ARGS_NEW
-
-#"$SCRIPT_DIR$BIN_RUN" $@
+"$SCRIPT_DIR$BIN_RUN" $ARGS_NEW
+if [ "$?" != "0" ]; then
+	sudo mv --force "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW" "$IMG_DIR$IMG_FILE" && sudo chmod 400 "$IMG_DIR$IMG_FILE"
+fi
 
 exit $?
