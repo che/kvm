@@ -5,18 +5,31 @@
 
 # Variables definition.
 SCRIPT_DIR="$(dirname "$0")/"
+BIN_COPY="kvm-copy"
+BIN_RUN="kvm-run"
 IMG_USER="$(whoami)"
-IMG_BIN_FILE="kvm"
-IMG_DIR_DEFAULT="/$IMG_USER/$IMG_BIN_FILE/"
-if [ "$IMG_USER" != "root" ]; then
-	IMG_DIR_DEFAULT="/home$IMG_DIR_DEFAULT"
-fi
+DIR="kvm/"
+IMG_DIR_DEFAULT="/home/$DIR$DIR"
 IMG_DIR=""
 IMG_FILE_DEFAULT="ubuntu-server-10.04-64.img"
 IMG_FILE=""
+USER_DIR_DEFAULT="/$IMG_USER/$DIR"
+if [ "$IMG_USER" != "root" ]; then
+	USER_DIR_DEFAULT="/home$USER_DIR_DEFAULT"
+fi
+USER_DIR=""
+USER_FILE_DEFAULT="$IMG_FILE_DEFAULT"
+USER_FILE=""
+DEST_FILE_PERM_DEFAULT="644"
+DEST_FILE_PERM=""
 IMG_FILE_EXT_CURRENT=".current"
 IMG_FILE_EXT_OLD=".old"
 IMG_FILE_EXT_NEW=".new"
+ARGS=""
+ARGS_NEW=""
+ARGS_NEW_STATUS=""
+
+REG_SEPARATOR="[\/]"
 
 # Print error message and exit.
 function error_msg()
@@ -24,5 +37,102 @@ function error_msg()
 	echo "Error: $1"
 	exit 1
 }
+
+# Image directory and file checking.
+function check_img()
+{
+	echo "$1" | grep -E "$REG_SEPARATOR" >/dev/null
+	STAT="$?"
+	sudo stat "$IMG_DIR_DEFAULT$1" 2>/dev/null | grep "Size:" | grep "file" >/dev/null
+	if [ "$?" == "0" ] && [ "$STAT" != "0" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+		IMG_FILE="$1"
+	else
+		STAT="$(sudo stat "$1" 2>/dev/null | grep "Size:")"
+		if [ "$?" == "0" ]; then
+			echo "$STAT" | grep "directory" >/dev/null
+			if [ "$?" == "0" ]; then
+				IMG_DIR="$(sudo bash -c "cd \"$1\" && pwd" 2>/dev/null)/"
+				IMG_FILE="$IMG_FILE_DEFAULT"
+			else
+				echo "$STAT" | grep "file" >/dev/null
+				if [ "$?" == "0" ]; then
+					IMG_DIR="$(dirname "$1")"
+					IMG_DIR="$(sudo bash -c "cd \"$IMG_DIR\" && pwd" 2>/dev/null)/"
+					IMG_FILE="$(basename "$1")"
+				else
+					error_msg "No such file '$1'"
+				fi
+			fi
+		else
+			error_msg "No such file or directory '$1'"
+		fi
+	fi
+	STAT=""
+}
+
+# Options definition.
+ARGS="$@"
+OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
+if [ "$?" != "0" ]; then
+	"$SCRIPT_DIR$BIN_RUN" --help
+	error_msg "Bad option(s) value"
+fi
+eval set -- "$OPTS"
+
+# Options parsing.
+while [ $# -gt 0 ]; do
+	case $1 in
+	-- )
+		shift
+	;;
+	-i|--kvm-image )
+		check_img "$2"
+		shift 2
+	;;
+	-h|--help )
+		"$SCRIPT_DIR$BIN_RUN" --help
+		exit 0
+	;;
+	* )
+		shift
+	;;
+	esac
+done
+
+# Image directory and file values checking.
+if [ -z "$IMG_DIR" ] || [ -z "$IMG_FILE" ]; then
+	if [ -z "$IMG_DIR" ]; then
+		IMG_DIR="$IMG_DIR_DEFAULT"
+	fi
+	if [ -z "$IMG_FILE" ]; then
+		IMG_FILE="$IMG_FILE_DEFAULT"
+	fi
+	check_img "$IMG_DIR$IMG_FILE"
+fi
+
+# Image file redefinition.
+for i in $ARGS; do
+	if [ "$ARGS_NEW_STATUS" == "yes" ]; then
+		ARGS_NEW="$ARGS_NEW $IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW"
+		ARGS_NEW_STATUS="no"
+	fi
+	if [ "$i" == "-i" ] || [ "$i" == "--kvm-image" ]; then
+		ARGS_NEW_STATUS="yes"
+	fi
+	echo $i
+	ARGS_NEW="$ARGS_NEW $i"
+done
+if [ -z "$ARGS_NEW_STATUS" ]; then
+	ARGS_NEW="$ARGS_NEW --kvm-image \"$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW\""
+fi
+
+# Renaming and coping.
+"$SCRIPT_DIR$BIN_COPY" --source "$IMG_DIR$IMG_FILE" --destination "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW"
+mv --force "$IMG_DIR$IMG_FILE" "$IMG_DIR$IMG_FILE$IMG_FILE_EXT_OLD"
+
+echo $ARGS_NEW
+
+#"$SCRIPT_DIR$BIN_RUN" $@
 
 exit $?
