@@ -21,6 +21,7 @@ ARGS=""
 ARGS_NEW=""
 ARGS_NEW_STATUS=""
 
+REG_PERMISSION="^[04567][04567][04567]$"
 REG_SEPARATOR="[\/]"
 
 # Print error message and exit.
@@ -63,11 +64,45 @@ function check_img()
 	STAT=""
 }
 
+# Help message definition.
+function help()
+{
+	cat <<H_E_L_P
+
+Usage: $(basename $0) [options]
+
+Options:
+    -i, --kvm-image   Set file KVM VM image
+                      (by default directory $IMG_DIR_DEFAULT
+                      and file $IMG_FILE_DEFAULT).
+    -p, --permission  Set permission for file after updating
+                      (by default $DEST_FILE_PERM_DEFAULT).
+    -v, --version     Print the current version.
+    -h, --help        Show this message.
+
+Note:
+    Other options:
+        -r, --ram-size,
+        -m, --mac-address,
+        -M, --no-mac-address,
+        -b, --bridge-interface,
+        -c, --cpu,
+        -g, --graphic,
+        -u, --guest-user,
+        -s, --guest-script-file,
+        -S, --no-guest-script,
+        -n, --guest-host-name,
+        -d, --guest-domain-name
+    to see help for kvm-run (command: kvm-run --help).
+
+H_E_L_P
+}
+
 # Options definition.
 ARGS="$@"
-OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:p:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,permission:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
-	"$SCRIPT_DIR$BIN_RUN" --help
+	help
 	error_msg "Bad option(s) value"
 fi
 eval set -- "$OPTS"
@@ -82,12 +117,21 @@ while [ $# -gt 0 ]; do
 		check_img "$2"
 		shift 2
 	;;
-	-h|--help )
-		"$SCRIPT_DIR$BIN_RUN" --help
-		exit 0
+	-p|--permission )
+		echo "$2" | grep "$REG_PERMISSION" >/dev/null
+		if [ "$?" == "0" ]; then
+			DEST_FILE_PERM="$2"
+		else
+			error_msg "Incorrectly permission value '$2'"
+		fi
+		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.0.2"
+		echo "Version: 1.1.0"
+		exit 0
+	;;
+	-h|--help )
+		help
 		exit 0
 	;;
 	* )
@@ -122,6 +166,22 @@ done
 if [ -z "$ARGS_NEW_STATUS" ]; then
 	ARGS_NEW="$ARGS_NEW --kvm-image \"$IMG_DIR$IMG_FILE$IMG_FILE_EXT_NEW\""
 fi
+
+# Permission option removing.
+ARGS="$ARGS_NEW"
+ARGS_NEW=""
+ARGS_NEW_STATUS=""
+for i in $ARGS; do
+	if [ "$ARGS_NEW_STATUS" == "yes" ]; then
+		ARGS_NEW_STATUS="no"
+	else
+		if [ "$i" == "-p" ] || [ "$i" == "--permission" ]; then
+			ARGS_NEW_STATUS="yes"
+		else
+			ARGS_NEW="$ARGS_NEW $i"
+		fi
+	fi
+done
 
 # Image destination file permission checking.
 if [ -z "$DEST_FILE_PERM" ]; then
