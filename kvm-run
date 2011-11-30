@@ -43,7 +43,7 @@ GUEST_CLI="ssh -t"
 GUEST_HOST_NAME_DEFAULT="dev"
 GUEST_HOST_NAME=""
 GUEST_DOMAIN_NAME=""
-UNKNOW=="unknow"
+UNKNOW="unknow"
 SCAN_UTIL="arp-scan"
 DOMAIN_NAME=""
 
@@ -135,14 +135,14 @@ if [ -f "\$RES_CONF" ]; then
 		if [ "\$?" == "0" ]; then
 			sudo cat "\$DNS_CONF" | grep -E "\$REG_DNS_CONF_STR" >/dev/null
 			if [ "\$?" == "0" ]; then
-				sudo sed -i "s#\(\$DNS_CONF_STR\).*#\1\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
+				sudo sed --in-place "s#\(\$DNS_CONF_STR\).*#\1\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
 			else
 				sudo cat "\$DNS_CONF" | grep -E "\$REG_DNS_CONF_C_STR" >/dev/null
 				if [ "\$?" == "0" ]; then
-					sudo sed -i "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
+					sudo sed --in-place "s#\(\#\$DNS_CONF_STR\).*#\1\n\$DNS_CONF_STR\$DNS_RES_CONF#g" "\$DNS_CONF" >/dev/null
 				fi
 			fi
-			sudo sed -i "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
+			sudo sed --in-place "s#\(nameserver\).*#\1 \$VM_HOST_LH#g" "\$RES_CONF" >/dev/null
 		fi
 		if [ -x "\$HOSTS_T_CONF" ]; then
 			sudo rm -f "\$HOSTS_T_CONF"
@@ -161,7 +161,7 @@ if [ -f "\$RES_CONF" ]; then
 				fi
 			fi
 		done
-		sudo mv -f "\$HOSTS_T_CONF" "\$HOSTS_CONF"
+		sudo mv --force "\$HOSTS_T_CONF" "\$HOSTS_CONF"
 		sudo "/etc/init.d/\$(echo "\$DNS_CONF" | cut -d\/ -f3 | cut -d\. -f1)" restart
 	fi
 	sudo nisdomainname "\$VM_DOMAIN_NAME" >/dev/null
@@ -350,7 +350,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.8.2"
+		echo "Version: 1.8.3"
 		exit 0
 	;;
 	-h|--help )
@@ -366,17 +366,17 @@ done
 
 # Guest user checking.
 if [ -z "$GUEST_USER" ]; then
-	GUEST_USER=$GUEST_USER_DEFAULT
+	GUEST_USER="$GUEST_USER_DEFAULT"
 fi
 
 # Guest host name checking.
 if [ -z "$GUEST_HOST_NAME" ]; then
-	GUEST_HOST_NAME=$GUEST_HOST_NAME_DEFAULT
+	GUEST_HOST_NAME="$GUEST_HOST_NAME_DEFAULT"
 fi
 
 # Guest domain name checking.
 if [ -z "$GUEST_DOMAIN_NAME" ]; then
-	GUEST_DOMAIN_NAME=$DOMAIN_NAME
+	GUEST_DOMAIN_NAME="$DOMAIN_NAME"
 fi
 
 # Guest script checking.
@@ -401,15 +401,15 @@ fi
 
 # RAM_SIZE value checking.
 if [ -z "$RAM_SIZE" ]; then
-	RAM_SIZE=$RAM_SIZE_DEFAULT
+	RAM_SIZE="$RAM_SIZE_DEFAULT"
 fi
 
 # CPU values checking.
 if [ -z "$CPU_CORES" ]; then
-	CPU_CORES=$CPU_CORES_DEFAULT
+	CPU_CORES="$CPU_CORES_DEFAULT"
 fi
 if [ -z "$CPU_MAX" ]; then
-	CPU_MAX=$CPU_MAX_DEFAULT
+	CPU_MAX="$CPU_MAX_DEFAULT"
 fi
 
 # MAC_ADDR value checking.
@@ -427,7 +427,7 @@ VM_NAME="$VM_NAME$(echo "$MAC_ADDR_" | sed "s/\://g")"
 
 # BR_IFACE value checking.
 if [ -z "$BR_IFACE" ]; then
-	BR_IFACE=$BR_IFACE_DEFAULT
+	BR_IFACE="$BR_IFACE_DEFAULT"
 fi
 
 # TAP interface definition.
@@ -436,7 +436,7 @@ for t in $(seq 0 127); do
 	if [ "$?" == "0" ]; then
 		sudo ip link set tap$t up
 		sudo brctl addif $BR_IFACE tap$t 2>/dev/null
-		TAP_ID=$t
+		TAP_ID="$t"
 		break
 	fi
 done
@@ -499,7 +499,7 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 		for s in $(seq 1 60); do
 			for i in $(sudo $SCAN_UTIL --interface "$BR_IFACE" "${IP_NET}/24" 2>/dev/null); do
 				if [ "$MAC_ADDR_" == "$i" ]; then
-					IP_ADDR=$T_STR
+					IP_ADDR="$T_STR"
 				fi
 				T_STR="$i"
 			done
@@ -509,10 +509,10 @@ if [ "$MAC_ADDR" != "$IP_ADDR" ]; then
 			sleep 1
 		done
 		if [ -z "$IP_ADDR" ]; then
-			IP_ADDR=$UNKNOW
+			IP_ADDR="$UNKNOW"
 		fi
 	else
-		IP_ADDR=$UNKNOW
+		IP_ADDR="$UNKNOW"
 	fi
 fi
 
