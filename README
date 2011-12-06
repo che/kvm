@@ -2,12 +2,12 @@ Management KVM machines.
 
 1) Install following packages:
     1.1) For Debian, Ubuntu:
-        apt-get install bridge-utils kvm
+        apt-get install bridge-utils arp-scan kvm ssh
 
 2) Add user into group kvm:
     usermod kvm -G <user_name>
 
-3) Cretae image file:
+3) Create image file:
     kvm-img create -f qcow2 -o preallocation=metadata,cluster_size=2M,encryption=off ./ubuntu-server-10.04-64.img 500G
 
 4) For bridge interface.
