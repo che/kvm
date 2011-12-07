@@ -2,7 +2,8 @@ Management KVM machines.
 
 1) Install following packages:
     1.1) For Debian, Ubuntu:
-        apt-get install uml-utilities bridge-utils arp-scan kvm ssh
+        1.1.1) Host: apt-get install uml-utilities bridge-utils arp-scan kvm ssh
+        1.1.2) Guest: apt-get install dnsmasq ssh
 
 2) Add user into group kvm:
     usermod kvm -G <user_name>
@@ -11,8 +12,8 @@ Management KVM machines.
     kvm-img create -f qcow2 -o preallocation=metadata,cluster_size=2M,encryption=off ./ubuntu-server-10.04-64.img 500G
 
 4) For bridge interface.
-    3.1) For Debian, Ubuntu:
-        3.1.1) Host file /etc/network/interfaces example:
+    4.1) For Debian, Ubuntu:
+        4.1.1) Host file /etc/network/interfaces example:
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
@@ -36,7 +37,7 @@ iface br0 inet static
 	bridge_stp 0
 	bridge_fd 0
 
-        3.1.2) Guest file /etc/network/interfaces example:
+        4.1.2) Guest file /etc/network/interfaces example:
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
