@@ -2,7 +2,7 @@ Management KVM machines.
 
 1) Install following packages:
     1.1) For Debian, Ubuntu:
-        apt-get install bridge-utils arp-scan kvm ssh
+        apt-get install uml-utilities bridge-utils arp-scan kvm ssh
 
 2) Add user into group kvm:
     usermod kvm -G <user_name>
