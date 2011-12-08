@@ -33,6 +33,13 @@ CPU_CORES_DEFAULT="2"
 CPU_CORES=""
 CPU_MAX_DEFAULT="1"
 CPU_MAX=""
+PROC_TYPE_DEFAULT_64="qemu64"
+PROC_TYPE_DEFAULT_32="qemu32"
+PROC_TYPE_DEFAULT=""
+PROC_TYPE_LIST_64="phenom core2duo kvm64"
+PROC_TYPE_LIST_32="coreduo 486 pentium pentium2 pentium3 athlon"
+PROC_TYPE_LIST=""
+PROC_TYPE=""
 DEV_MODEL="virtio"
 UI_MODE=" -nographic"
 GUEST_USER_DEFAULT="hh"
@@ -188,6 +195,8 @@ Options:
     -M, --no-mac-address     Not use MAC address at startup.
     -b, --bridge-interface   Set bridge interface(by default $BR_IFACE_DEFAULT).
     -c, --cpu                Set CPU cores and max using. Format: cores:maxcpu.
+    -p, --processor-type     Set processor type(by default $PROC_TYPE_DEFAULT). Other types:
+                             $(echo $PROC_TYPE_LIST | sed "s/ /, /g").
     -g, --graphic            Set GUI mode(by default text mode).
     -u, --guest-user         Set user name for script running on guest machine
                              (by default $GUEST_USER_DEFAULT).
@@ -244,8 +253,17 @@ if [ -z "$DOMAIN_NAME" ]; then
 	DOMAIN_NAME="local"
 fi
 
+# Processor type definition.
+if [[ "$(uname --machine)" =~ "*_64" ]] || [[ "$(uname --all)" =~ "*x86_64*" ]]; then
+	PROC_TYPE_DEFAULT="$PROC_TYPE_DEFAULT_64"
+	PROC_TYPE_LIST="$PROC_TYPE_LIST_64"
+else
+	PROC_TYPE_DEFAULT="$PROC_TYPE_DEFAULT_32"
+	PROC_TYPE_LIST="$PROC_TYPE_LIST_32"
+fi
+
 # Options definition.
-OPTS="$(getopt -o "i:r:m:Mb:c:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
+OPTS="$(getopt -o "i:r:m:Mb:c:p:gu:s:Sn:d:vh" -l "kvm-image:,ram-size:,mac-address:,no-mac-address,bridge-interface:,cpu:,processor-type:,graphic,guest-user:,guest-script-file:,no-guest-script,guest-host-name:,guest-domain-name:,version,help" -a -- "$@" 2>/dev/null)"
 if [ "$?" != "0" ]; then
 	help
 	error_msg "Bad option(s) value"
@@ -306,6 +324,18 @@ while [ $# -gt 0 ]; do
 		fi
 		shift 2
 	;;
+	-p|--processor-type )
+		for i in $PROC_TYPE_DEFAULT $PROC_TYPE_LIST; do
+			if [ "$i" == "$2" ]; then
+				PROC_TYPE="$2"
+				break
+			fi
+		done
+		if [ -z "$PROC_TYPE" ]; then
+			error_msg "Processor type '$2' does not support"
+		fi
+		shift 2
+	;;
 	-g|--graphic )
 		UI_MODE=""
 		shift
@@ -350,7 +380,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.8.4"
+		echo "Version: 1.9.0"
 		exit 0
 	;;
 	-h|--help )
@@ -412,6 +442,11 @@ if [ -z "$CPU_MAX" ]; then
 	CPU_MAX="$CPU_MAX_DEFAULT"
 fi
 
+# Processor type checking.
+if [ -z "$PROC_TYPE" ]; then
+	PROC_TYPE="$PROC_TYPE_DEFAULT"
+fi
+
 # MAC_ADDR value checking.
 if [ -z "$MAC_ADDR_STATUS" ]; then
 	def_mac_addr
@@ -447,7 +482,7 @@ fi
 # KVM running.
 $VM_BIN_FILE "$IMG_DIR$IMG_FILE" \
 	-name "$VM_NAME" \
-	-m "$RAM_SIZE" \
+	-m "$RAM_SIZE" -cpu "$PROC_TYPE" \
 	-smp ${CPU_MAX},cores=${CPU_CORES},maxcpus=$CPU_MAX \
 	-drive cache=writeback,aio=threads,if=$DEV_MODEL \
 	-net nic,model=${DEV_MODEL},vlan=0$MAC_ADDR_STR \
@@ -473,6 +508,7 @@ echo "        Host: $(hostname)"
 echo "        Machine: $VM_NAME"
 echo "    PID: $VM_PID"
 echo "    CPU:"
+echo "        Type: $PROC_TYPE"
 echo "        Cores: $CPU_CORES"
 echo "        Max: $CPU_MAX"
 echo "    RAM size: ${RAM_SIZE}M"
