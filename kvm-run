@@ -196,7 +196,7 @@ Options:
     -b, --bridge-interface   Set bridge interface(by default $BR_IFACE_DEFAULT).
     -c, --cpu                Set CPU cores and max using. Format: cores:maxcpu.
     -p, --cpu-model          Set CPU model(by default $CPU_MODEL_DEFAULT). Other models:
-                             $(echo $CPU_MODEL_LIST | sed "s/ /, /g").
+                             $(echo $CPU_MODEL_LIST | sed "s/ /, /g" | sed "s/kvm64,/kvm64,\n                             /g").
     -g, --graphic            Set GUI mode(by default text mode).
     -u, --guest-user         Set user name for script running on guest machine
                              (by default $GUEST_USER_DEFAULT).
@@ -256,7 +256,7 @@ fi
 # Processor type definition.
 if [[ "$(uname --machine)" =~ "*_64" ]] || [[ "$(uname --all)" =~ "*x86_64*" ]]; then
 	CPU_MODEL_DEFAULT="$CPU_MODEL_DEFAULT_64"
-	CPU_MODEL_LIST="$CPU_MODEL_LIST_64"
+	CPU_MODEL_LIST="$CPU_MODEL_LIST_64 $CPU_MODEL_DEFAULT_32 $CPU_MODEL_LIST_32"
 else
 	CPU_MODEL_DEFAULT="$CPU_MODEL_DEFAULT_32"
 	CPU_MODEL_LIST="$CPU_MODEL_LIST_32"
@@ -380,7 +380,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 	;;
 	-v|--version )
-		echo "Version: 1.9.1"
+		echo "Version: 1.9.2"
 		exit 0
 	;;
 	-h|--help )
