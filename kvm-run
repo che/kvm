@@ -253,7 +253,7 @@ if [ -z "$DOMAIN_NAME" ]; then
 	DOMAIN_NAME="local"
 fi
 
-# Processor type definition.
+# CPU model definition by default and list.
 if [[ "$(uname --machine)" == *"_64"* ]] || [[ "$(uname --all)" == *"x86_64"* ]]; then
 	CPU_MODEL_DEFAULT="$CPU_MODEL_DEFAULT_64"
 	CPU_MODEL_LIST="$CPU_MODEL_LIST_64 $CPU_MODEL_DEFAULT_32 $CPU_MODEL_LIST_32"
