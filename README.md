@@ -34,15 +34,15 @@ iface eth0 inet manual
 
 auto br0
 iface br0 inet static
-	network 10.0.0.0
-	gateway 10.0.0.1
-	address 10.0.0.4
-	broadcast 10.0.0.255
-	netmask 255.255.255.0
-	bridge_ports eth0
-	bridge_maxwait 0
-	bridge_stp 0
-	bridge_fd 0
+    network 10.0.0.0
+    gateway 10.0.0.1
+    address 10.0.0.4
+    broadcast 10.0.0.255
+    netmask 255.255.255.0
+    bridge_ports eth0
+    bridge_maxwait 0
+    bridge_stp 0
+    bridge_fd 0
 
             5.1.1.2) Dyamic IP address:
 # The loopback network interface
