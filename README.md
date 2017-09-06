@@ -1,129 +1,66 @@
-# APAD MVP infrastructure
+Management KVM machines.
 
-----------
+1) Install following packages:
 
-## Content
+    1.1) For Debian, Ubuntu:
 
-**[Creating new infrastructure](#creating-new-infrastructure)**
-- [MANUAL](#manual)
-- [AUTOMATED - Mk1](#automated-mk1)
-- [AUTOMATED - Mk2](#automated-mk2)
-- [CONFIGURATION](#configuration)
+        1.1.1) Host: apt-get install uml-utilities bridge-utils arp-scan kvm ssh
 
-**[Updating existing infrastructure](#updating-existing-infrastructure)**
+        1.1.2) Guest: apt-get install dnsmasq ssh
 
-**[Deleting existing infrastructure](#deleting-existing-infrastructure)**
+2) Add user into group kvm:
+    usermod kvm -G <user_name>
 
-**[Under the hood](#under-the-hood)**
+3) Create image file:
+    kvm-img create -f qcow2 -o preallocation=metadata,cluster_size=2M,encryption=off ./ubuntu-server-10.04-64.img 500G
 
-**[How To](#how-to)**
+4) Convert image file:
+    kvm-img convert -O qcow2 -o preallocation=metadata,cluster_size=2M,encryption=off ./ubuntu-server-10.04-64.img ./ubuntu-server-10.04-64.img.new
 
-----------
+5) For bridge interface.
 
-## Creating new infrastructure
+    5.1) For Debian, Ubuntu:
 
-### MANUAL
+        5.1.1) Host file /etc/network/interfaces example:
 
-* Run **code-pipeline-infrastructure-builder.cfn.yml** manually via CF Console
+            5.1.1.1) Static IP address:
+# The loopback network interface
+auto lo
+iface lo inet loopback
 
-*N.B!:* ensure your stack name is finished with '**-pipeline**' postfix
+# The primary network interface
+auto eth0
+iface eth0 inet manual
 
-* Upload this repository to newly created CodeCommit repository
+auto br0
+iface br0 inet static
+	network 10.0.0.0
+	gateway 10.0.0.1
+	address 10.0.0.4
+	broadcast 10.0.0.255
+	netmask 255.255.255.0
+	bridge_ports eth0
+	bridge_maxwait 0
+	bridge_stp 0
+	bridge_fd 0
 
-----------
+            5.1.1.2) Dyamic IP address:
+# The loopback network interface
+auto lo
+iface lo inet loopback
 
-### AUTOMATED - Mk1
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
 
-* Use bash script helper, **build-pipeline.sh**
+        5.1.2) Guest file /etc/network/interfaces example:
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
 
-* By default, install method defaults to '**cli**'.
+# The loopback network interface
+auto lo
+iface lo inet loopback
 
-Usage:
-```sh
-$ sh build_pipeline.sh 'project_name' 'environment_name' 'aws_profile' 'aws_region'
-```
-
-Example:
-```sh
-$ sh build-pipeline.sh apad mvp sandbox eu-west-1
-```
-
-##### Upload this repository to newly created CodeCommit repository
-
-----------
-
-### AUTOMATED - Mk2
-
-However, new nice option added for **build-pipeline.sh**: '**ansible**'!
-
-* Use bash script helper, **build-pipeline.sh** but with '**ansible**' as '**install_method**' option
-
-Usage:
-```sh
-$ sh build_pipeline.sh 'project_name' 'environment_name' 'aws_profile' 'aws_region' ['install_method']
-```
-
-Example:
-```sh
-$ sh build-pipeline.sh apad mvp sandbox eu-west-1 ansible
-```
-
-It will apply the same pipeline using the same configuration file stored in `config` folder but also **automates** transfer of this repository to target CodeCommit repo via **ssh** by default.
-
-Highly recommended.
-
-----------
-
-### CONFIGURATION
-
-CF parameters configuration is stored in `config/cf` folder.
-
-Script reads the configuration based on  `${project_name}/${environment_name}` subfolders.
-
-Check bash script code for details.
-
-----------
-
-### Updating existing infrastructure
-
-* Commit to respective branch to CodeCommit repository.
-Code Pipeline will automatically carry on the update procedures
-
-----------
-
-### Deleting existing infrastructure
-
-* Remove manually master stack via CloudFormation Console
-* Remove manually pipeline stack via CloudFormation Console
-
-----------
-
-### Under the hood
-
-* **modules** folder contains **master.cfn.yml** file that defines how infrastructure should be build as well as all templates required to build default MVP infrastructure
-
-* **config** folder defines all-in-one configuration file in json format that contains all variables you might want to change in all modules.
-It is passed to **master.cfn.yml** template later on automatically
-
-* **roles** folder and **playbook.yml** are the part of Ansible workflow, which job is to normalize **master.cfn.yml** template and populate with correct defined earlier in **code-pipeline-infrastructure-builder.cfn.yml** Code Pipeline variables
-
-* **buildspec.yml** file defines how CodeBuild should normalize and upload all modules and master file to S3 bucket
-
-----------
-
-### How To
-
-1) create EC2 -> KeyPair you want to use in current environment
-
-2) upload IAM -> SSH public key used for CodeCommit **or** create HTTPS Git credentials for AWS CodeCommit
-
-3) create config/cf/'project'-'region'.json used via Pipeline to create infrastructure
-
-4) default *modules/db* used -> PostgreSQL. Choose between MySQL and PostgreSQL and fix master file
-
-5) create CF Pipeline:
-- manual via CF
-- using script (**do not forget to create** config/cf/'project'/'env'/cf_parameters.json)
-
-5.1) upload repository to 'branch' you want to use ('master' by default)
-*N.B!*: 'ansible' method uploads repository automatically
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
