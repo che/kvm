@@ -6,8 +6,8 @@
 
 **[Creating new infrastructure](#creating-new-infrastructure)**
 - [MANUAL](#manual)
-- [AUTOMATED - Mk1](#automated-mk1)
-- [AUTOMATED - Mk2](#automated-mk2)
+- [AUTOMATED Mk1](#automated-mk1)
+- [AUTOMATED Mk2](#automated-mk2)
 - [CONFIGURATION](#configuration)
 
 **[Updating existing infrastructure](#updating-existing-infrastructure)**
@@ -32,7 +32,7 @@
 
 ----------
 
-### AUTOMATED - Mk1
+### AUTOMATED Mk1
 
 * Use bash script helper, **build-pipeline.sh**
 
@@ -52,7 +52,7 @@ $ sh build-pipeline.sh apad mvp sandbox eu-west-1
 
 ----------
 
-### AUTOMATED - Mk2
+### AUTOMATED Mk2
 
 However, new nice option added for **build-pipeline.sh**: '**ansible**'!
 
